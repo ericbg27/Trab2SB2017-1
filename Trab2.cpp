@@ -96,6 +96,7 @@ typedef struct BSS {
     string size;
 }BSS;
 //************************************************************************************************************************
+
 int main(int argc, char *argv[]) {
     //Abertura do arquivo
 
@@ -106,7 +107,7 @@ int main(int argc, char *argv[]) {
     std::string str1(argv[1],strlen(argv[1])); //Abrindo arquivo para Pre-processamento
     fstream entrada (argv[1],ios::in);
     if(entrada.is_open()) 
-        Preprocessamento(entrada,str1); //Realizando Pre-processamento
+        Preprocessamento(entrada,str1); //Realizando Preprocessamento
     entrada.close(); // Fechando arquivo de entrada
     entrada.clear();
     str1.erase(str1.length()-3,3);
@@ -121,12 +122,10 @@ int main(int argc, char *argv[]) {
     //Chamada das funções de traducao
 
     diretivas(entrada,saida); //Imprimindo section .data e section .bss no arquivo de saida
-    entrada.clear(); //Retornando para o inicio dos arquivos de entrada e saida
+    entrada.clear(); //Retornando para o inicio do arquivo de entrada
     entrada.seekg(0,ios::beg);
-    saida.clear();
-    saida.seekg(0,ios::beg);
 
-    instrucoes();
+    instrucoes(entrada,saida);
 
 return 0; 
 }
@@ -310,6 +309,8 @@ void diretivas(istream &entrada, ostream &saida) { //Procura pela SECTION DATA e
         if(!flag_DATA) { //Se nao chegou na SECTION DATA, pegar proxima linha
             continue;
         } else {
+            var.clear();
+            valor.clear();
             for(i=0;i<linha.length();i++) { //Procurando rotulo, o qual sera o nome da variavel 
                 if(linha.at(i) == ':') {
                     k = i+2;
@@ -351,6 +352,70 @@ void diretivas(istream &entrada, ostream &saida) { //Procura pela SECTION DATA e
     delete[] var_bss; //Liberando espaco de memoria
 }
 
-void instrucoes() { //Faz a traducao das 14 instrucoes basicas do assembly inventado
+void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instrucoes do assembly inventado
+    string line, rotulo, inst, op1, op2;
+    unsigned int i1,k1,j1;
+    bool flag_TEXT=false; //Flag para indicar que se esta na SECTION TEXT
 
+    saida << endl;
+    saida << "section .text" << endl; //Iniciando section .text
+    saida << "global _start" << endl; //Colocando variavel global _start
+    saida << "_start:" << endl;
+    saida << "  mov ebx,0" << endl; //Zerando contador escolhido (ebx)
+
+    while(getline(entrada,line)) {
+        if(line == "SECTION TEXT") {
+            flag_TEXT = true;
+        }
+        if(line == "SECTION DATA") {
+            flag_TEXT = false;
+        }
+        if(!flag_TEXT) {
+            continue;
+        } else { //Se ja chegou na SECTION TEXT
+            rotulo.clear();
+            inst.clear();
+            op1.clear();
+            op2.clear();
+            for(i1=0;i1<line.length();i1++) {
+                 if(linha.at(i1) == ':') { //Se a linha possuir rotulo
+                    rotulo += line.at(i1);
+                    saida << rotulo;
+                    k1 = i1+2;
+                    break;
+                }
+                rotulo += line.at(i1);
+            }
+            for(i1=k1;i1<line.length();i1++) { //Pegando instrucao
+                if(line.at(i1) == ' ') {
+                    k1 = i1+1;
+                    break;
+                }
+                inst += line.at(i1);
+            }
+            switch(inst) { //Switch para traducao
+                case "ADD":
+                    for(i1=k1;i1<line.length();i1++) { //Pegando operando
+                        op1 += line.at(i1);
+                    }
+                    saida << "  add ebx," << '[' << op1 << ']' << endl;
+                    break;
+                case "SUB":
+                    for(i1=k1;i1<line.length();i1++) { //Pegando operando
+                        op1 += line.at(i1);
+                    }
+                    saida << "  sub ebx," << '[' << op1 << ']' << endl;
+                    break;
+                case "MUL":
+                    for(i1=k1;i1<line.length();i1++) { //Pegando operando
+                        op1 += line.at(i1);
+                    }
+                    saida << "  push eax" << endl;
+                    saida << "  mov eax,ebx" << endl;
+                    saida << "  imul" <<  '[' << op1 << ']' << endl;
+                    saida << "  mov ebx,eax" << endl;
+                    saida << "  pop eax" << endl;
+            }
+        }
+    }
 }
