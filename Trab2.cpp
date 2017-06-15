@@ -400,6 +400,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
                 }
                 inst += line.at(i1);
             }
+            //Inicio da traducao da instrucao
             if(inst == "ADD") {
                 for(i1=k1;i1<line.length();i1++) { //Pegando operando
                     op1 += line.at(i1);
@@ -482,10 +483,32 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
                     saida << " cmp ebx,0" << endl;
                     saida << "      je " << op1 << endl;
                 }   
+            } else if (inst == "LOAD") {
+                for(i1=k1;i1<line.length();i1++) { //Pegando operando
+                    op1 += line.at(i1);
+                }
+                saida << "  mov ebx," << '[' << op1 << ']' << endl;
+            } else if (inst == "STORE") {
+                for(i1=k1;i1<line.length();i1++) { //Pegando operando
+                    op1 += line.at(i1);
+                }
+                saida << "  mov " << '[' << op1 << ']' << ",ebx" << endl;
+            } else if (inst == "STOP") {
+                for(i1=k1;i1<line.length();i1++) { //Pegando operando
+                    op1 += line.at(i1);
+                }
+                if(flag_rotulo == false) {
+                    saida << "  mov eax,1" << endl;
+                    saida << "  mov ebx,0" << endl;
+                    saida << "  int 80h" << endl;
+                } else {
+                    saida << " mov eax,1" << endl;
+                    saida << "  mov ebx,0" << endl;
+                    saida << "  int 80h" << endl;
+                }   
             }
+            //FIm da traducao da instrucao
         }
     }
-    saida << "  mov eax,1" << endl;
-    saida << "  mov ebx,0" << endl;
-    saida << "  int 80h" << endl;
+
 }
