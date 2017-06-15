@@ -398,23 +398,53 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
                     for(i1=k1;i1<line.length();i1++) { //Pegando operando
                         op1 += line.at(i1);
                     }
-                    saida << "  add ebx," << '[' << op1 << ']' << endl;
+                    saida << "  add ebx," << '[' << op1 << ']' << endl; //Gravando codigo IA32 correspondente na saida
                     break;
                 case "SUB":
                     for(i1=k1;i1<line.length();i1++) { //Pegando operando
                         op1 += line.at(i1);
                     }
-                    saida << "  sub ebx," << '[' << op1 << ']' << endl;
+                    saida << "  sub ebx," << '[' << op1 << ']' << endl; //Gravando codigo IA32 correspondente na saida
                     break;
                 case "MUL":
                     for(i1=k1;i1<line.length();i1++) { //Pegando operando
                         op1 += line.at(i1);
                     }
-                    saida << "  push eax" << endl;
+                    saida << "  push eax" << endl; //Gravando codigo IA32 correspondente na saida
                     saida << "  mov eax,ebx" << endl;
-                    saida << "  imul" <<  '[' << op1 << ']' << endl;
+                    saida << "  imul dword " <<  '[' << op1 << ']' << endl;
                     saida << "  mov ebx,eax" << endl;
                     saida << "  pop eax" << endl;
+                    break;
+                case "DIV":
+                    for(i1=k1;i1<line.length();i1++) { //Pegando operando
+                        op1 += line.at(i1);
+                    }
+                    saida << "  push eax" << endl; //Gravando codigo IA32 correspondente na saida
+                    saida << "  mov eax,ebx" << endl;
+                    saida << "  idiv dword " <<  '[' << op1 << ']' << endl;
+                    saida << "  mov ebx,eax" << endl;
+                    saida << "  pop eax" << endl;
+                    break;
+                case "JMP":
+                    for(i1=k1;i1<line.length();i1++) { //Pegando operando
+                        op1 += line.at(i1);
+                    }
+                    saida << "  jmp " << op1 << endl;
+                    break;
+                case "JMPN":
+                    for(i1=k1;i1<line.length();i1++) { //Pegando operando
+                        op1 += line.at(i1);
+                    }
+                    saida << "  cmp ebx,0" << endl;
+                    saida << jl << op1 << endl;
+                    break;
+                case "JMPP":
+                     for(i1=k1;i1<line.length();i1++) { //Pegando operando
+                        op1 += line.at(i1);
+                    }
+                    saida << "  cmp ebx,0" << endl;
+                    
             }
         }
     }
