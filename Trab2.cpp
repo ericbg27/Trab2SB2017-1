@@ -5,12 +5,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <algorithm>
+#include <new>
 
 using namespace std;
 
 void Preprocessamento(istream&,string);
-//void diretivas();
-//void instrucoes();
+void diretivas(istream&,ostream&);
+void instrucoes(istream&,ostream&);
+
 //**************************** LISTA EQU *******************************************************
 
 class no {
@@ -88,6 +90,12 @@ void EQU_List::limpa_lista () {
 }
 //*********************************************** FIM DA LISTA EQU *******************************************************
 
+//********************************************* INICIO DA STRUCT BSS *****************************************************
+typedef struct BSS {
+    string variavel;
+    string size;
+}BSS;
+//************************************************************************************************************************
 int main(int argc, char *argv[]) {
     //Abertura do arquivo
 
@@ -106,12 +114,19 @@ int main(int argc, char *argv[]) {
     fstream saida (str1.c_str(),ios::out); //Criando arquivo de saida .s
     str1.erase(str1.length()-2,2); //Abrindo arquivo Preprocessado
     str1 += "_Preproc.asm";
-    fstream out (str1.c_str(),ios::out);
+    fstream entrada (str1.c_str(),ios::out);
 
     //Fim da abertura do arquivo
 
     //Chamada das funções de traducao
 
+    diretivas(entrada,saida); //Imprimindo section .data e section .bss no arquivo de saida
+    entrada.clear(); //Retornando para o inicio dos arquivos de entrada e saida
+    entrada.seekg(0,ios::beg);
+    saida.clear();
+    saida.seekg(0,ios::beg);
+
+    instrucoes();
 
 return 0; 
 }
@@ -277,13 +292,16 @@ out.clear();
 
 //****************************************************** FIM DO PRE PROCESSADOR ***********************************************
 
-void diretivas(istream &entrada, ostream &saida) { //Procura pela SECTION DATA e Diretivas SPACE e CONST, gerando a section .data
-    string linha;
+void diretivas(istream &entrada, ostream &saida) { //Procura pela SECTION DATA e Diretivas SPACE e CONST, gerando a section .data e section .bss
+    string linha, var, dir, valor;
     bool flag_DATA = false //Flag para indicar SECTION DATA;
-    unsigned int i,k;
+    unsigned int i,k,j=0;
+    BSS *var_bss;
     while(getline(entrada,linha)) {
         if(linha == "SECTION DATA") { //Se a linha do arquivo for igual a SECTION DATA, colocar flag_DATA em true e pegar proxima linha
             flag_DATA == true;
+            saida << "section.data";
+            saida << endl;
             getline(entrada,linha);
         }
         if(linha == "SECTION TEXT") { //Se encontrou a SECTION TEXT, colocar flag_data em false (Caso esta venha depois da SECTION DATA)
@@ -294,14 +312,45 @@ void diretivas(istream &entrada, ostream &saida) { //Procura pela SECTION DATA e
         } else {
             for(i=0;i<linha.length();i++) { //Procurando rotulo, o qual sera o nome da variavel 
                 if(linha.at(i) == ':') {
-                    k = i+1;
+                    k = i+2;
                     break;
                 }
+                var += linha.at(i);
+            }
+            while(linha.at(i) != ' ') { //Verificando diretiva (CONST ou SPACE)
+                dir += linha.at(i);
+                if(linha.at(i) == ' ')
+                    k = i+1;
+            }
+            for(i=k;i<linha.length();i++) { //Pegando valor apos diretiva
+                valor += linha.at(i);
+            }
+            if(dir == "CONST") { //Se for a diretiva CONST, gravar no arquivo de saida
+                saida << var;
+                saida << ' dd ';
+                saida << valor;
+                saida << endl;
+            } 
+            if(dir == "SPACE") { //Se for a diretiva SPACE, salvar dados para posterior gravacao
+                var_bss = new BSS[1](); //Alocando espaco
+                var_bss[j].variavel = var; //Salvando dados no elemento j do vetor
+                var_bss[j].size = valor;
+                j++; //Incrementando contador de elementos
             }
         }
     }
+
+    saida << endl;
+    saida << "section .bss";
+    for(i=0;i<=j;i++) { //Imprimindo no arquivo de saida os elementos definidos pela diretiva SPACE na section .bss
+        saida << var_bss[i].variavel;
+        saida << " resd "
+        saida << var_bss[i].size;
+        saida << endl;
+    }
+    delete[] var_bss; //Liberando espaco de memoria
 }
 
-//void instrucoes() { //Faz a traducao das 14 instrucoes basicas do assembly inventado
+void instrucoes() { //Faz a traducao das 14 instrucoes basicas do assembly inventado
 
-//}
+}
