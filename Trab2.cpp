@@ -113,7 +113,6 @@ int main(int argc, char *argv[]) {
     entrada.clear();
     str1.erase(str1.length()-4,4);
     str1 += ".s";
-    cout << "str1: " << str1 << endl;
     fstream saida (str1.c_str(),ios::out); //Criando arquivo de saida .s
     str1.erase (str1.length()-2,2); //Abrindo arquivo Preprocessado
     str1 += "_Preproc.asm";
@@ -122,7 +121,6 @@ int main(int argc, char *argv[]) {
     //Fim da abertura do arquivo
 
     //Chamada das funções de traducao
-    cout << "str1: " << str1 << endl;
     diretivas(entradapreproc,saida,var_bss); //Imprimindo section .data e section .bss no arquivo de saida
     entradapreproc.clear(); //Retornando para o inicio do arquivo de entrada
     entradapreproc.seekg(0,ios::beg);
@@ -506,9 +504,68 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
                     saida << "  mov ebx,0" << endl;
                     saida << "  int 80h" << endl;
                 }   
+            } else if (inst == "INPUT") {
+                for(i1=k1;i1<line.length();i1++) { //Pegando operando
+                    op1 += line.at(i1);
+                }
+                if(flag_rotulo == false) {
+                    saida << "  push " << op1 << endl;
+                    saida << "  call LeerInteiro" << endl;
+                } else {
+                    saida << " push" << endl;
+                    saida << "      call LeerInteiro" << endl;
+                }   
+            } else if (inst == "OUTPUT") {
+                for(i1=k1;i1<line.length();i1++) { //Pegando operando
+                    op1 += line.at(i1);
+                }
+                if(flag_rotulo == false) {
+                    saida << "  push " << op1 << endl;
+                    saida << "  call EscreverInteiro" << endl;
+                } else {
+                    saida << " push" << endl;
+                    saida << "      call EscreverInteiro" << endl;
+                }
             }
-            //FIm da traducao da instrucao
+            //Fim da traducao da instrucao
         }
     }
+    //Impressao das rotinas
+    saida << "  LeerInteiro: push EBP" << endl;
+    saida << "               mov EBP,ESP" << endl;
+    saida << "               push eax" << endl;
+    saida << "               push ebx" << endl;
+    saida << "               push ecx" << endl;
+    saida << "               push edx" << endl;
+    saida << "               mov eax,3" << endl;
+    saida << "               mov ebx,2" << endl;
+    saida << "               mov ecx,[EBP+8]" << endl;
+    saida << "               mov edx,4" << endl;
+    saida << "               int 80h" << endl;
+    saida << "               pop edx" << endl;
+    saida << "               pop ecx" << endl;
+    saida << "               pop ebx" << endl;
+    saida << "               pop eax" << endl;
+    saida << "               mov ESP,EBP" << endl;
+    saida << "               pop EBP" << endl;
+    saida << "               ret 4" << endl;
 
+    saida << "  EscreverInteiro: push EBP" << endl;
+    saida << "                   mov EBP,ESP" << endl;
+    saida << "                   push eax" << endl;
+    saida << "                   push ebx" << endl;
+    saida << "                   push ecx" << endl;
+    saida << "                   push edx" << endl;
+    saida << "                   mov eax,3" << endl;
+    saida << "                   mov ebx,2" << endl;
+    saida << "                   mov ecx,[EBP+8]" << endl;
+    saida << "                   mov edx,4" << endl;
+    saida << "                   int 80h" << endl;
+    saida << "                   pop edx" << endl;
+    saida << "                   pop ecx" << endl;
+    saida << "                   pop ebx" << endl;
+    saida << "                   pop eax" << endl;
+    saida << "                   mov ESP,EBP" << endl;
+    saida << "                   pop EBP" << endl;
+    saida << "                   ret 4" << endl;  
 }
