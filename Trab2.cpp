@@ -9,10 +9,6 @@
 
 using namespace std;
 
-void Preprocessamento(istream&,string);
-void diretivas(istream&,ostream&);
-void instrucoes(istream&,ostream&);
-
 //**************************** LISTA EQU *******************************************************
 
 class no {
@@ -97,9 +93,14 @@ typedef struct BSS {
 }BSS;
 //************************************************************************************************************************
 
-int main(int argc, char *argv[]) {
-    //Abertura do arquivo
+void Preprocessamento(istream&,string);
+void diretivas(istream&,ostream&,BSS*);
+void instrucoes(istream&,ostream&);
 
+int main(int argc, char *argv[]) {
+    BSS *var_bss;
+    //Abertura do arquivo
+    var_bss = new BSS[1]();
     if(argc != 2) {
         cout << "O programa deve receber apenas o arquivo .asm!" << endl;
         exit(EXIT_FAILURE);
@@ -110,22 +111,24 @@ int main(int argc, char *argv[]) {
         Preprocessamento(entrada,str1); //Realizando Preprocessamento
     entrada.close(); // Fechando arquivo de entrada
     entrada.clear();
-    str1.erase(str1.length()-3,3);
+    str1.erase(str1.length()-4,4);
     str1 += ".s";
+    cout << "str1: " << str1 << endl;
     fstream saida (str1.c_str(),ios::out); //Criando arquivo de saida .s
-    str1.erase(str1.length()-2,2); //Abrindo arquivo Preprocessado
+    str1.erase (str1.length()-2,2); //Abrindo arquivo Preprocessado
     str1 += "_Preproc.asm";
-    fstream entrada (str1.c_str(),ios::out);
+    fstream entradapreproc (str1.c_str(),ios::in);
 
     //Fim da abertura do arquivo
 
     //Chamada das funções de traducao
-
-    diretivas(entrada,saida); //Imprimindo section .data e section .bss no arquivo de saida
-    entrada.clear(); //Retornando para o inicio do arquivo de entrada
-    entrada.seekg(0,ios::beg);
-
-    instrucoes(entrada,saida);
+    cout << "str1: " << str1 << endl;
+    diretivas(entradapreproc,saida,var_bss); //Imprimindo section .data e section .bss no arquivo de saida
+    entradapreproc.clear(); //Retornando para o inicio do arquivo de entrada
+    entradapreproc.seekg(0,ios::beg);
+    cout << "Passou Diretivas!" << endl;
+    saida.clear();
+    instrucoes(entradapreproc,saida);
 
 return 0; 
 }
@@ -236,7 +239,6 @@ while(getline(file,linha)) {
     tam3 = linhain.length();
     k = 0; //Zerando contadores
     i = 0;
-    cout << "linhain: " << linhain << endl;
     //************************** Verificacao da Diretiva EQU ******************************************
         pos = linhain.find("EQU");
         posit = pos;
@@ -260,7 +262,6 @@ while(getline(file,linha)) {
             for(i=k;i<tam3;i++) { //Pega numero apos o EQU
                 valorstr += linhain.at(i);
             }
-            cout << "Rotulo: " << rotulo << endl;
             no.insere_final(rotulo, valorstr); //Criando no na lista de rotulos da diretiva EQU
             continue;
         }    
@@ -291,26 +292,27 @@ out.clear();
 
 //****************************************************** FIM DO PRE PROCESSADOR ***********************************************
 
-void diretivas(istream &entrada, ostream &saida) { //Procura pela SECTION DATA e Diretivas SPACE e CONST, gerando a section .data e section .bss
+void diretivas(istream &entrada, ostream &saida, BSS *var_bss) { //Procura pela SECTION DATA e Diretivas SPACE e CONST, gerando a section .data e section .bss
     string linha, var, dir, valor;
-    bool flag_DATA = false //Flag para indicar SECTION DATA;
-    unsigned int i,k,j=0;
-    BSS *var_bss;
+    bool flag_DATA = false, flag_SPACE = false; //Flag para indicar SECTION DATA e para indicar diretiva SPACE
+    unsigned int i, k, j=0;
+    cout << "Entrou Diretivas!" << endl;
     while(getline(entrada,linha)) {
         if(linha == "SECTION DATA") { //Se a linha do arquivo for igual a SECTION DATA, colocar flag_DATA em true e pegar proxima linha
-            flag_DATA == true;
-            saida << "section.data";
+            flag_DATA = true;
+            saida << "section .data";
             saida << endl;
-            getline(entrada,linha);
+            continue;
         }
         if(linha == "SECTION TEXT") { //Se encontrou a SECTION TEXT, colocar flag_data em false (Caso esta venha depois da SECTION DATA)
-            flag_DATA == false;
+            flag_DATA = false;
         }
-        if(!flag_DATA) { //Se nao chegou na SECTION DATA, pegar proxima linha
+        if(flag_DATA == false) { //Se nao chegou na SECTION DATA, pegar proxima linha
             continue;
         } else {
             var.clear();
             valor.clear();
+            dir.clear();
             for(i=0;i<linha.length();i++) { //Procurando rotulo, o qual sera o nome da variavel 
                 if(linha.at(i) == ':') {
                     k = i+2;
@@ -318,45 +320,47 @@ void diretivas(istream &entrada, ostream &saida) { //Procura pela SECTION DATA e
                 }
                 var += linha.at(i);
             }
-            while(linha.at(i) != ' ') { //Verificando diretiva (CONST ou SPACE)
-                dir += linha.at(i);
-                if(linha.at(i) == ' ')
-                    k = i+1;
+            while(linha.at(k) != ' ') { //Verificando diretiva (CONST ou SPACE)
+                dir += linha.at(k);
+                k++;
             }
+            k++; //Indo para o proximo token
             for(i=k;i<linha.length();i++) { //Pegando valor apos diretiva
                 valor += linha.at(i);
             }
             if(dir == "CONST") { //Se for a diretiva CONST, gravar no arquivo de saida
                 saida << var;
-                saida << ' dd ';
+                saida << " dd ";
                 saida << valor;
                 saida << endl;
             } 
             if(dir == "SPACE") { //Se for a diretiva SPACE, salvar dados para posterior gravacao
-                var_bss = new BSS[1](); //Alocando espaco
+                if(flag_SPACE == true)
+                    var_bss = new BSS[1](); //Alocando espaco
                 var_bss[j].variavel = var; //Salvando dados no elemento j do vetor
                 var_bss[j].size = valor;
                 j++; //Incrementando contador de elementos
+                flag_SPACE = true;
             }
         }
     }
-
-    saida << endl;
-    saida << "section .bss";
-    for(i=0;i<=j;i++) { //Imprimindo no arquivo de saida os elementos definidos pela diretiva SPACE na section .bss
-        saida << var_bss[i].variavel;
-        saida << " resd "
-        saida << var_bss[i].size;
+    if(flag_SPACE == true) { //Se entrou na diretiva SPACE tera section .bss
         saida << endl;
+        saida << "section .bss" << endl;
+        for(i=0;i<=j;i++) { //Imprimindo no arquivo de saida os elementos definidos pela diretiva SPACE na section .bss
+            saida << var_bss[i].variavel;
+            saida << " resd ";
+            saida << var_bss[i].size;
+            saida << endl;
+       }
     }
-    delete[] var_bss; //Liberando espaco de memoria
 }
 
 void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instrucoes do assembly inventado
     string line, rotulo, inst, op1, op2;
     unsigned int i1,k1,j1;
-    bool flag_TEXT=false; //Flag para indicar que se esta na SECTION TEXT
-
+    bool flag_TEXT=false, flag_rotulo; //Flag para indicar que se esta na SECTION TEXT e flag para indicar que ha rotulo
+    cout << "Entrou Intrucoes!" << endl;
     saida << endl;
     saida << "section .text" << endl; //Iniciando section .text
     saida << "global _start" << endl; //Colocando variavel global _start
@@ -377,11 +381,14 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
             inst.clear();
             op1.clear();
             op2.clear();
+            flag_rotulo = false;
+            k1=0;
             for(i1=0;i1<line.length();i1++) {
-                 if(linha.at(i1) == ':') { //Se a linha possuir rotulo
+                 if(line.at(i1) == ':') { //Se a linha possuir rotulo
                     rotulo += line.at(i1);
-                    saida << rotulo;
+                    saida << "  " << rotulo;
                     k1 = i1+2;
+                    flag_rotulo = true;
                     break;
                 }
                 rotulo += line.at(i1);
@@ -393,59 +400,92 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
                 }
                 inst += line.at(i1);
             }
-            switch(inst) { //Switch para traducao
-                case "ADD":
-                    for(i1=k1;i1<line.length();i1++) { //Pegando operando
-                        op1 += line.at(i1);
-                    }
-                    saida << "  add ebx," << '[' << op1 << ']' << endl; //Gravando codigo IA32 correspondente na saida
-                    break;
-                case "SUB":
-                    for(i1=k1;i1<line.length();i1++) { //Pegando operando
-                        op1 += line.at(i1);
-                    }
-                    saida << "  sub ebx," << '[' << op1 << ']' << endl; //Gravando codigo IA32 correspondente na saida
-                    break;
-                case "MUL":
-                    for(i1=k1;i1<line.length();i1++) { //Pegando operando
-                        op1 += line.at(i1);
-                    }
+            if(inst == "ADD") {
+                for(i1=k1;i1<line.length();i1++) { //Pegando operando
+                    op1 += line.at(i1);
+                }
+                saida << "  add ebx," << '[' << op1 << ']' << endl; //Gravando codigo IA32 correspondente na saida
+            } else if(inst == "SUB") {
+                for(i1=k1;i1<line.length();i1++) { //Pegando operando
+                    op1 += line.at(i1);
+                }
+                saida << "  sub ebx," << '[' << op1 << ']' << endl; //Gravando codigo IA32 correspondente na saida
+            } else if(inst == "MUL") {
+                for(i1=k1;i1<line.length();i1++) { //Pegando operando
+                    op1 += line.at(i1);
+                }
+                if(flag_rotulo == false) {
                     saida << "  push eax" << endl; //Gravando codigo IA32 correspondente na saida
                     saida << "  mov eax,ebx" << endl;
                     saida << "  imul dword " <<  '[' << op1 << ']' << endl;
                     saida << "  mov ebx,eax" << endl;
                     saida << "  pop eax" << endl;
-                    break;
-                case "DIV":
-                    for(i1=k1;i1<line.length();i1++) { //Pegando operando
-                        op1 += line.at(i1);
-                    }
+                } else {
+                    saida << " push eax" << endl; //Gravando codigo IA32 correspondente na saida
+                    saida << "      mov eax,ebx" << endl;
+                    saida << "      imul dword " <<  '[' << op1 << ']' << endl;
+                    saida << "      mov ebx,eax" << endl;
+                    saida << "      pop eax" << endl;
+                }
+            } else if(inst == "DIV") {
+                for(i1=k1;i1<line.length();i1++) { //Pegando operando
+                    op1 += line.at(i1);
+                }
+                if(flag_rotulo == false) {
                     saida << "  push eax" << endl; //Gravando codigo IA32 correspondente na saida
                     saida << "  mov eax,ebx" << endl;
                     saida << "  idiv dword " <<  '[' << op1 << ']' << endl;
                     saida << "  mov ebx,eax" << endl;
                     saida << "  pop eax" << endl;
-                    break;
-                case "JMP":
-                    for(i1=k1;i1<line.length();i1++) { //Pegando operando
-                        op1 += line.at(i1);
-                    }
-                    saida << "  jmp " << op1 << endl;
-                    break;
-                case "JMPN":
-                    for(i1=k1;i1<line.length();i1++) { //Pegando operando
-                        op1 += line.at(i1);
-                    }
+                } else {
+                    saida << " push eax" << endl; //Gravando codigo IA32 correspondente na saida
+                    saida << "      mov eax,ebx" << endl;
+                    saida << "      idiv dword " <<  '[' << op1 << ']' << endl;
+                    saida << "      mov ebx,eax" << endl;
+                    saida << "      pop eax" << endl;
+                }
+            } else if(inst == "JMP") {
+                for(i1=k1;i1<line.length();i1++) { //Pegando operando
+                    op1 += line.at(i1);
+                }
+                saida << "  jmp " << op1 << endl;
+            } else if(inst == "JMPN") {
+                for(i1=k1;i1<line.length();i1++) { //Pegando operando
+                    op1 += line.at(i1);
+                }
+                if(flag_rotulo == false) {
+                saida << "  cmp ebx,0" << endl;
+                saida << "  jl " << op1 << endl;
+                } else {
+                    saida << " cmp ebx,0" << endl;
+                    saida << "      jl " << op1 << endl;
+                }   
+            } else if(inst == "JMPP") {
+                for(i1=k1;i1<line.length();i1++) { //Pegando operando
+                    op1 += line.at(i1);
+                }
+                if(flag_rotulo == false) {
                     saida << "  cmp ebx,0" << endl;
-                    saida << jl << op1 << endl;
-                    break;
-                case "JMPP":
-                     for(i1=k1;i1<line.length();i1++) { //Pegando operando
-                        op1 += line.at(i1);
-                    }
+                    saida << "  jg " << op1 << endl;
+                } else {
+                    saida << " cmp ebx,0" << endl;
+                    saida << "      jg " << op1 << endl;
+                }   
+            } else if(inst == "JMPZ") {
+                for(i1=k1;i1<line.length();i1++) { //Pegando operando
+                    op1 += line.at(i1);
+                }
+                if(flag_rotulo == false) {
                     saida << "  cmp ebx,0" << endl;
-                    
+                    saida << "  je " << op1 << endl;
+                } else {
+                    saida << " cmp ebx,0" << endl;
+                    saida << "      je " << op1 << endl;
+                }   
             }
         }
     }
+    saida << "  mov eax,1" << endl;
+    saida << "  mov ebx,0" << endl;
+    saida << "  int 80h" << endl;
 }
