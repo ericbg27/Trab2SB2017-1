@@ -1,0 +1,307 @@
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <algorithm>
+
+using namespace std;
+
+void Preprocessamento(istream&,string);
+//void diretivas();
+//void instrucoes();
+//**************************** LISTA EQU *******************************************************
+
+class no {
+    string rot; //Rotulo associado pela diretiva EQU
+    string val_rotulo; //Valor associado ao rotulo
+    no *prox_rot; //Posicao do proximo rotulo
+public:
+    no() {};
+    void Def_Rotulo (string rotulo) {rot = rotulo;} //Define o rotulo de um no
+    void Def_Valor (string valor) {val_rotulo = valor;} //Define o valor associado a um rotulo
+    void Def_prox_rot (no *prox) {prox_rot = prox;} //Define proximo no
+    string Return_rot() {return rot;}
+    string Return_val() {return val_rotulo;}
+    no* Return_prox_rot () {return prox_rot;}
+};
+
+class EQU_List { //Lista para as definicoes das diretivas EQU
+    public:
+        no *head;
+        EQU_List() {
+            head = NULL;
+        }
+        void insere_final (string,string); //Insere no no final da lista
+        string busca_no (string,bool&); //Busca no na lista a partir do rotulo
+        void limpa_lista();
+};
+
+void EQU_List::insere_final (string rotulo, string val) {
+    no *novo_no = new no();
+    novo_no->Def_Rotulo(rotulo);
+    novo_no->Def_Valor(val);
+    novo_no->Def_prox_rot(NULL);
+    no *tmp = head;
+
+    if(tmp != NULL) { //Se existem nos na lista, ir para o final
+            while(tmp->Return_prox_rot() != NULL) {
+                tmp = tmp->Return_prox_rot();
+            }
+        tmp->Def_prox_rot(novo_no);
+    } else {
+        head = novo_no;
+    }
+}
+
+string EQU_List::busca_no (string label, bool& exist) { //Busca no na lista
+    bool *aux = &exist;
+    no *tmp = head;
+    string tmpval;
+    while(tmp != NULL) {
+        if(tmp->Return_rot() == label) { //Se tiver rotulo == label, retornar valor associado e coloca flag exist em true
+            tmpval = tmp->Return_val();
+            *aux = true;
+            break;
+        }
+        tmp = tmp->Return_prox_rot();
+    }
+    if(tmp == NULL) {
+        *aux = false;
+        return "";
+    }
+        return tmpval;
+}
+
+void EQU_List::limpa_lista () {
+    no *tmp = head;
+    if (tmp == NULL)
+        return;
+    no *aux;
+    do {
+        aux = head->Return_prox_rot();
+        head = aux;
+        delete tmp;
+        tmp = head;
+    } while(tmp != NULL);
+}
+//*********************************************** FIM DA LISTA EQU *******************************************************
+
+int main(int argc, char *argv[]) {
+    //Abertura do arquivo
+
+    if(argc != 2) {
+        cout << "O programa deve receber apenas o arquivo .asm!" << endl;
+        exit(EXIT_FAILURE);
+    }
+    std::string str1(argv[1],strlen(argv[1])); //Abrindo arquivo para Pre-processamento
+    fstream entrada (argv[1],ios::in);
+    if(entrada.is_open()) 
+        Preprocessamento(entrada,str1); //Realizando Pre-processamento
+    entrada.close(); // Fechando arquivo de entrada
+    entrada.clear();
+    str1.erase(str1.length()-3,3);
+    str1 += ".s";
+    fstream saida (str1.c_str(),ios::out); //Criando arquivo de saida .s
+    str1.erase(str1.length()-2,2); //Abrindo arquivo Preprocessado
+    str1 += "_Preproc.asm";
+    fstream out (str1.c_str(),ios::out);
+
+    //Fim da abertura do arquivo
+
+    //Chamada das funções de traducao
+
+
+return 0; 
+}
+
+void Preprocessamento(istream &file, string nome_arq) {
+EQU_List no; //Objeto da lista da diretiva EQU
+string str, linha, strtemp;
+string token, token1, token2, dir, linhaout, linhain, aux, aux2, aux3;
+string rotulo, valorstr; //strings para abrir arquivo, guardar linhas, verificacoes de linhas e diretivas
+unsigned int i, j, k, tam2, tam3; //Contadores e variaveis para tamanho de linha
+int flagIF1 = 0, flagIF2 = 0;//Flag para verificar erros, se existe rotulo, flags para diretiva IF, flag para verificar se o programa esta na ordem correta
+bool eh_rotulo = false; //Variavel para definir se pertence a lista da diretiva EQU
+int posit = 0; //Inteiro para pegar posicao das diretivas IF, CONST e SPACE
+size_t pos; //Necessario para funcao str.find()
+
+nome_arq.erase(nome_arq.length()-4,4);
+nome_arq += "_Preproc.asm";
+fstream out (nome_arq.c_str(),ios::out);
+
+if(out.is_open()) {
+while(getline(file,linha)) {
+    pos = linha.find("\t");
+    posit = pos;
+    if(posit > -1) {
+        while(posit > -1) {
+            aux = linha.substr(0,pos);
+            aux2 = linha.substr(pos+1,string::npos);
+            linha.clear();
+            linha += aux;
+            linha += ' ';
+            linha += aux2;
+            aux.clear();
+            aux2.clear();
+            pos = linha.find("\t");
+            posit = pos;
+        }
+    }
+    
+    if(flagIF1 == 0 && flagIF2 == 1) { //Se achou a diretiva IF mas seu operando foi zero, ignorar linha
+       flagIF2 = 0;
+       continue;
+    }
+    token.clear(); //Limpando strings
+    valorstr.clear();
+    rotulo.clear();
+    aux.clear();
+    linhain.clear();
+    eh_rotulo = false; //Colocando variavel em false para o caso de nova verificacao
+
+    if(linha.length() == 0) { //Se a linha estiver em branco, ir para a proxima linha
+        continue;
+    }
+    if(linha.at(0) == ';') { //Se for uma linha de comentario, ir para a proxima linha
+        continue;
+    }
+    tam2 = linha.length();
+    transform(linha.begin(), linha.end(), linha.begin(), ptr_fun<int, int>(toupper)); //Colocando em maiusculo
+    for(i=0;i<tam2;i++) { //Verifica espacos no inicio da linha
+        if(linha.at(i) != ' ') {
+            k = i;
+            break;
+        }
+    }
+//************************************** LEITURA DA LINHA DO ARQUIVO DE ENTRADA **************************************************
+    k = 0;
+    i = 0;
+    while(i < linha.length()) {
+        for(i=k;i<tam2;i++) { //Verifica espacos na linha
+            if(linha.at(i) != ' ') {
+                k = i;
+                break;
+            }
+        }
+        if(i == tam2 || linha.at(i) == ';') { //Se houver apenas comentarios no final da linha, ir para a proxima
+            break;
+        }
+        for(i=k;i<tam2;i++) {//Pega token
+            if(linha.at(i) == ' ') {
+                k = i;
+                break;
+            }
+            if(linha.at(i) == ':') {
+                token += linha.at(i);
+                k = i+1;
+                break;
+            }
+            token += linha.at(i);
+        }
+        aux = no.busca_no(token,eh_rotulo);
+        if(eh_rotulo == true) {
+            linhain += aux;
+            linhain += ' ';
+        } else {
+            linhain += token;
+            linhain += ' ';
+        }
+        token.clear();
+    }
+    linhain.erase(linhain.length()-1,1); //Apagando espaço restante no final da linha
+    if(flagIF1 == 1) { //Se achou a diretiva IF e seu operando foi diferente de 0, imprimir linha no arquivo de saida
+            out << linhain;
+            out << endl;
+            linhain.clear();
+            flagIF1 = 0;
+            flagIF2 = 0;
+            continue;
+    }
+    tam3 = linhain.length();
+    k = 0; //Zerando contadores
+    i = 0;
+    cout << "linhain: " << linhain << endl;
+    //************************** Verificacao da Diretiva EQU ******************************************
+        pos = linhain.find("EQU");
+        posit = pos;
+        if(posit > -1) {
+            k = 0;
+            for(i=k;i<tam3;i++) {
+                if(linhain.at(i) == ':') { //Armazenando rotulo, como esperado para a diretiva EQU
+                    for(j=0;j<i;j++) {
+                        rotulo += linha.at(j);
+                    }
+                        k = i+2;
+                        break;
+                }
+            }
+            for(i=k;i<tam3;i++) { //Pegando proximo operando, que deve ser a diretiva EQU
+                if(linhain.at(i) == ' ') {
+                    k = i+1;
+                    break;
+                }
+            }
+            for(i=k;i<tam3;i++) { //Pega numero apos o EQU
+                valorstr += linhain.at(i);
+            }
+            cout << "Rotulo: " << rotulo << endl;
+            no.insere_final(rotulo, valorstr); //Criando no na lista de rotulos da diretiva EQU
+            continue;
+        }    
+            //*********************** Fim da verificacao da diretiva EQU **********************************
+
+        pos = linhain.find("IF"); //Procura diretiva IF, para verificacao
+        posit = pos;
+        if(posit > -1) {
+            for(j=pos+3;j<linhain.length();j++) {
+                aux += linhain.at(j);
+            }
+            if(atoi(aux.c_str()) != 0) {
+                flagIF1 = 1;
+            }
+            flagIF2 = 1; //Indica que entrou na diretiva IF, servindo para que nao se imprima a proxima linha
+            continue;
+        }
+    out << linhain;
+    out << endl;
+    linhain.clear();
+    }
+}
+//*******************************************************************************************************************************
+no.limpa_lista();
+out.close();
+out.clear();
+}
+
+//****************************************************** FIM DO PRE PROCESSADOR ***********************************************
+
+void diretivas(istream &entrada, ostream &saida) { //Procura pela SECTION DATA e Diretivas SPACE e CONST, gerando a section .data
+    string linha;
+    bool flag_DATA = false //Flag para indicar SECTION DATA;
+    unsigned int i,k;
+    while(getline(entrada,linha)) {
+        if(linha == "SECTION DATA") { //Se a linha do arquivo for igual a SECTION DATA, colocar flag_DATA em true e pegar proxima linha
+            flag_DATA == true;
+            getline(entrada,linha);
+        }
+        if(linha == "SECTION TEXT") { //Se encontrou a SECTION TEXT, colocar flag_data em false (Caso esta venha depois da SECTION DATA)
+            flag_DATA == false;
+        }
+        if(!flag_DATA) { //Se nao chegou na SECTION DATA, pegar proxima linha
+            continue;
+        } else {
+            for(i=0;i<linha.length();i++) { //Procurando rotulo, o qual sera o nome da variavel 
+                if(linha.at(i) == ':') {
+                    k = i+1;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+//void instrucoes() { //Faz a traducao das 14 instrucoes basicas do assembly inventado
+
+//}
