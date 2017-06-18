@@ -1,76 +1,3 @@
-section .data
-num1 dw 2
-num2 dw 4
-
-section .text
-global _start
-_start:
-/////////////////////////////////////////////// Funcoes provavelmente desnecessarias ///////////////////////////////////////////
-	;ADD
-	add:	push EBP
-			mov EBP,ESP
-			add ebx,[EBP+8]
-			mov ESP,EBP
-			pop EBP
-			ret 4
-
-	;SUB
-	sub:	push EBP
-			mov EBP,ESP
-			add ebx,[EBP+8]
-			mov ESP,EBP
-			pop EBP
-			ret 4
-
-	;MUL
-	mul_csinal:	push EBP
-				mov EBP,ESP
-				push eax ;Funcao imul multiplica o que esta em eax pelo operando, logo salvar o valor de eax
-				mov eax,ebx ;Colocando o valor do acumulador ebx em eax
-				imul [EBP+8] ;Multiplicando o valor do acumulador pelo operando
-				mov ebx,eax ;Armazenando resultado no acumulador ebx
-				pop eax ;Devolvendo a eax seu valor original
-				mov ESP,EBP
-				pop EBP
-				ret 4
-
-	mul_ssinal: push EBP ;Verificar necessidade de haver uma funcao para mult sem sinal e com sinal
-				mov EBP,ESP
-				push eax ;Processo identico ao utilizando na mul_csinal
-				mov eax,ebx
-				mul [EBP+8]
-				mov ebx,eax
-				pop eax
-				mov ESP,EBP
-				pop EBP
-				ret 4
-
-	;DIV
-	div_csinal: push EBP
-				mov EBP,ESP
-				push eax ;Funcao idiv divide o que esta em eax pelo operando, logo salvar o valor de eax
-				mov eax,ebx
-				idiv [EBP+8]
-				mov ebx,eax
-				pop eax
-				mov ESP,EBP
-				pop EBP
-				ret 4
-
-	div_ssinal: div_csinal: push EBP
-				mov EBP,ESP
-				push eax 
-				mov eax,ebx
-				idiv [EBP+8]
-				mov ebx,eax
-				pop eax
-				mov ESP,EBP
-				pop EBP
-				ret 4
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/////////////////////////// Substitutas para as funcoes provavelmente desnecessarias /////////////////////////////////////////
-
 ;ADD
 	add ebx,[nome da variavel]
 
@@ -106,8 +33,6 @@ _start:
 	div [nome da variavel]
 	mov ebx,eax
 	pop eax
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ;JMP
 	jmp [nome]
