@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <new>
 #include <ctype.h>
+#include <stdlib.h>
 
 using namespace std;
 
@@ -101,7 +102,7 @@ void instrucoes(istream&,ostream&);
 int main(int argc, char *argv[]) {
     BSS *var_bss;
     //Abertura do arquivo
-    var_bss = new BSS[1]();
+    var_bss = (BSS*)malloc(sizeof(BSS));
     if(argc != 2) {
         cout << "O programa deve receber apenas o arquivo .asm!" << endl;
         exit(EXIT_FAILURE);
@@ -312,6 +313,8 @@ void diretivas(istream &entrada, ostream &saida, BSS *var_bss) { //Procura pela 
             var.clear();
             valor.clear();
             dir.clear();
+            k = 0;
+    		i = 0;
             for(i=0;i<linha.length();i++) { //Procurando rotulo, o qual sera o nome da variavel 
                 if(linha.at(i) == ':') {
                     k = i+2;
@@ -324,6 +327,7 @@ void diretivas(istream &entrada, ostream &saida, BSS *var_bss) { //Procura pela 
                 k++;
             }
             k++; //Indo para o proximo token
+            cout << dir << endl;
             for(i=k;i<linha.length();i++) { //Pegando valor apos diretiva
                 valor += linha.at(i);
             }
@@ -335,30 +339,33 @@ void diretivas(istream &entrada, ostream &saida, BSS *var_bss) { //Procura pela 
             } 
             if(dir == "SPACE") { //Se for a diretiva SPACE, salvar dados para posterior gravacao
                 if(flag_SPACE == true)
-                    var_bss = new BSS[1](); //Alocando espaco
+                    var_bss = (BSS*)realloc(var_bss,(j+1)*sizeof(BSS)); //Alocando espaco
+                cout << "j: " << j << endl;
                 var_bss[j].variavel = var; //Salvando dados no elemento j do vetor
                 var_bss[j].size = valor;
-                j++; //Incrementando contador de elementos
                 flag_SPACE = true;
+                j++; //Incrementando contador de elementos
+                cout << "var: " << var << endl;
             }
         }
     }
     if(flag_SPACE == true) { //Se entrou na diretiva SPACE tera section .bss
         saida << endl;
         saida << "section .bss" << endl;
-        for(i=0;i<=j;i++) { //Imprimindo no arquivo de saida os elementos definidos pela diretiva SPACE na section .bss
+        for(i=0;i<=j-1;i++) { //Imprimindo no arquivo de saida os elementos definidos pela diretiva SPACE na section .bss
             saida << var_bss[i].variavel;
+            cout << var_bss[i].variavel << endl;
             saida << " resd ";
             saida << var_bss[i].size;
             saida << endl;
        }
     }
+    free(var_bss);
 }
 
 void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instrucoes do assembly inventado
     string line, rotulo, inst, op1, op2;
-    unsigned int i1,k1,j1;
-    size_t pos;
+    unsigned int i1,k1;
     bool flag_TEXT=false, flag_rotulo; //Flag para indicar que se esta na SECTION TEXT e flag para indicar que ha rotulo
     cout << "Entrou Intrucoes!" << endl;
     saida << endl;
@@ -401,6 +408,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
                 inst += line.at(i1);
             }
             //Inicio da traducao da instrucao
+
             if(inst == "ADD") {
                 for(i1=k1;i1<line.length();i1++) { //Pegando operando
                     op1 += line.at(i1);
@@ -411,6 +419,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
                     op1 += line.at(i1);
                 }
                 saida << "  sub ebx," << '[' << op1 << ']' << endl; //Gravando codigo IA32 correspondente na saida
+
             } else if(inst == "MUL") {
                 for(i1=k1;i1<line.length();i1++) { //Pegando operando
                     op1 += line.at(i1);
@@ -428,6 +437,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
                     saida << "      mov ebx,eax" << endl;
                     saida << "      pop eax" << endl;
                 }
+
             } else if(inst == "DIV") {
                 for(i1=k1;i1<line.length();i1++) { //Pegando operando
                     op1 += line.at(i1);
@@ -445,11 +455,13 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
                     saida << "      mov ebx,eax" << endl;
                     saida << "      pop eax" << endl;
                 }
+
             } else if(inst == "JMP") {
                 for(i1=k1;i1<line.length();i1++) { //Pegando operando
                     op1 += line.at(i1);
                 }
                 saida << "  jmp " << op1 << endl;
+
             } else if(inst == "JMPN") {
                 for(i1=k1;i1<line.length();i1++) { //Pegando operando
                     op1 += line.at(i1);
@@ -461,6 +473,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
                     saida << " cmp ebx,0" << endl;
                     saida << "      jl " << op1 << endl;
                 }   
+
             } else if(inst == "JMPP") {
                 for(i1=k1;i1<line.length();i1++) { //Pegando operando
                     op1 += line.at(i1);
@@ -472,6 +485,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
                     saida << " cmp ebx,0" << endl;
                     saida << "      jg " << op1 << endl;
                 }   
+
             } else if(inst == "JMPZ") {
                 for(i1=k1;i1<line.length();i1++) { //Pegando operando
                     op1 += line.at(i1);
@@ -483,16 +497,19 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
                     saida << " cmp ebx,0" << endl;
                     saida << "      je " << op1 << endl;
                 }   
+
             } else if (inst == "LOAD") {
                 for(i1=k1;i1<line.length();i1++) { //Pegando operando
                     op1 += line.at(i1);
                 }
                 saida << "  mov ebx," << '[' << op1 << ']' << endl;
+
             } else if (inst == "STORE") {
                 for(i1=k1;i1<line.length();i1++) { //Pegando operando
                     op1 += line.at(i1);
                 }
                 saida << "  mov " << '[' << op1 << ']' << ",ebx" << endl;
+
             } else if (inst == "STOP") {
                 for(i1=k1;i1<line.length();i1++) { //Pegando operando
                     op1 += line.at(i1);
@@ -506,6 +523,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
                     saida << "  mov ebx,0" << endl;
                     saida << "  int 80h" << endl;
                 }   
+
             } else if (inst == "INPUT") {
                 for(i1=k1;i1<line.length();i1++) { //Pegando operando
                     op1 += line.at(i1);
@@ -517,6 +535,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
                     saida << " push" << op1 << endl;
                     saida << "      call LeerInteiro" << endl;
                 }
+
             } else if (inst == "OUTPUT") {
                 for(i1=k1;i1<line.length();i1++) { //Pegando operando
                     op1 += line.at(i1);
@@ -533,41 +552,4 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
         }
     }
     //Impressao das rotinas
-    saida << "  LeerInteiro: push EBP" << endl;
-    saida << "               mov EBP,ESP" << endl;
-    saida << "               push eax" << endl;
-    saida << "               push ebx" << endl;
-    saida << "               push ecx" << endl;
-    saida << "               push edx" << endl;
-    saida << "               mov eax,3" << endl;
-    saida << "               mov ebx,2" << endl;
-    saida << "               mov ecx,[EBP+8]" << endl;
-    saida << "               mov edx,4" << endl;
-    saida << "               int 80h" << endl;
-    saida << "               pop edx" << endl;
-    saida << "               pop ecx" << endl;
-    saida << "               pop ebx" << endl;
-    saida << "               pop eax" << endl;
-    saida << "               mov ESP,EBP" << endl;
-    saida << "               pop EBP" << endl;
-    saida << "               ret 4" << endl;
-
-    saida << "  EscreverInteiro: push EBP" << endl;
-    saida << "                   mov EBP,ESP" << endl;
-    saida << "                   push eax" << endl;
-    saida << "                   push ebx" << endl;
-    saida << "                   push ecx" << endl;
-    saida << "                   push edx" << endl;
-    saida << "                   mov eax,3" << endl;
-    saida << "                   mov ebx,2" << endl;
-    saida << "                   mov ecx,[EBP+8]" << endl;
-    saida << "                   mov edx,4" << endl;
-    saida << "                   int 80h" << endl;
-    saida << "                   pop edx" << endl;
-    saida << "                   pop ecx" << endl;
-    saida << "                   pop ebx" << endl;
-    saida << "                   pop eax" << endl;
-    saida << "                   mov ESP,EBP" << endl;
-    saida << "                   pop EBP" << endl;
-    saida << "                   ret 4" << endl;  
 }
