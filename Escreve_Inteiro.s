@@ -1,4 +1,4 @@
-%include "io.mac"
+%include "io.mac" ;Inicio do Teste
 section .data
 msg0 db "Numero Invalido!",0ah
 
@@ -13,8 +13,8 @@ push N1
 call Escreve_Inteiro
 mov eax,1
 mov ebx,0
-int 80h
-Escreve_Inteiro: enter 11,0
+int 80h ;Fim do Teste
+Escreve_Inteiro: enter 12,0
                  push eax
                  push ebx
                  push ecx
@@ -26,6 +26,8 @@ Escreve_Inteiro: enter 11,0
                  mov ecx,10
                  mov edi,[EBP+8]
                  mov eax,[edi]
+                 cmp eax,0
+                 je Zero
                  cmp dword [edi],0 ;Verificando se o numero eh negativo
                  jl Neg
          Positivo: cdq 
@@ -37,7 +39,7 @@ Escreve_Inteiro: enter 11,0
                jl Numero_Inv
                cmp edx,0x39
                jg Numero_Inv
-               mov [EBP-11+esi],edx
+               mov [EBP-12+esi],edx
                inc esi
                jmp Positivo
          Neg: mov ebx,1
@@ -51,41 +53,45 @@ Escreve_Inteiro: enter 11,0
                      jl Numero_Inv
                      cmp edx,0x39
                      jg Numero_Inv
-                     mov [EBP-11+esi],dl
+                     mov [EBP-12+esi],dl
                      inc esi
                      jmp Neg_Loop
+         Zero: add eax,0x30
+               mov [EBP-12+esi],eax
+               inc esi
+               jmp Imprime
          Numero_Inv: mov eax,4
                      mov ebx,1
                      mov ecx,msg0
                      mov edx,17
                      int 80h
                      jmp Exit_Func
-                 Imprime: cmp ebx,1
-                      je insert_sign
-                      mov byte [EBP-11+esi],0ah
-                      mov edi,esi
-                      mov eax,11
-                      sub eax,esi
-                      mov edi,eax
-                      mov esi,eax
-                      inc esi
-                      Sys_Write: mov eax,4
-                                 mov ebx,1 
-                                 mov ecx,EBP
-                                 sub ecx,esi
-                                 mov edx,1
-                                 int 80h
-                                 inc esi
-                                 cmp esi,12
-                                 jne Sys_Write
-                                 mov eax,4
-                                 mov ebx,1
-                                 mov ecx,EBP
-                                 sub ecx,edi
-                                 mov edx,1
-                                 int 80h
-                                 jmp Exit_Func
-                 insert_sign: mov byte [EBP-11+esi],0x2D
+         Imprime: cmp ebx,1
+                  je insert_sign
+                  mov byte [EBP-12+esi],0ah
+                  mov edi,esi
+                  mov eax,12
+                  sub eax,esi
+                  mov edi,eax
+                  mov esi,eax
+                  inc esi
+                  Sys_Write: mov eax,4
+                             mov ebx,1 
+                             mov ecx,EBP
+                             sub ecx,esi
+                             mov edx,1
+                             int 80h
+                             inc esi
+                             cmp esi,13
+                             jne Sys_Write
+                             mov eax,4
+                             mov ebx,1
+                             mov ecx,EBP
+                             sub ecx,edi
+                             mov edx,1
+                             int 80h
+                             jmp Exit_Func
+                 insert_sign: mov byte [EBP-12+esi],0x2D
                               inc esi
                               mov ebx,0
                               jmp Imprime
@@ -96,4 +102,4 @@ Escreve_Inteiro: enter 11,0
                             pop ebx
                             pop eax
                             leave
-                            ret
+                            ret 4
