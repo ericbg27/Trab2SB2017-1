@@ -6,11 +6,11 @@ global _start
 _start:
 mov byte [N1],0x2D
 push N1
-call C_OUTPUT
+call EscreverChar
 mov eax,1
 mov ebx,0
 int 80h
-C_OUTPUT: push EBP ;push variavel antes (talvez mais um registrador). Funcao ainda nao esta pronta
+EscreverChar:  push EBP
 		   mov EBP,ESP
 		   push eax
 		   push ebx
