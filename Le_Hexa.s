@@ -11,6 +11,7 @@ _start:
 push N1
 call LerHexa
 PutInt [N1]
+nwln
 push dword [N1]
 call EscreverHexa
 mov eax,1
@@ -94,33 +95,39 @@ EscreverHexa: enter 9,0 ;Dando errado, verificar
               push esi
               push edi
               mov eax,[EBP+8]
-              mov edi,-1
-              xor esi,esi
-              mov ebx,16
+              mov esi,-2
+              xor ebx,ebx
+              mov edi,16
               cmp eax,0
               jl Inv_HEX
               Div_Loop: cdq
-                        div ebx
-                        mov [EBP+edi],edx
-                        inc esi
-                        dec edi
-                        cmp eax,0
-                        je Print_HEX
-                        jmp Div_Loop
+                        div edi
+                        cmp DL,10
+                        jge ASCII_HEX
+                        add DL,0x30
+                        Store_HEX: mov byte [EBP+esi],DL
+                                   mov byte BL,[EBP+esi]
+                                   PutCh BL
+                                   nwln
+                                   dec esi
+                                   cmp eax,0
+                                   je Print_HEX
+                                   jmp Div_Loop
+              ASCII_HEX: add DL,0x37
+                         jmp Store_HEX
               Inv_HEX: mov eax,4
                        mov ebx,1
                        mov ecx,msg0
                        mov edx,17
                        int 80h
                        jmp F_HEX
-             Print_HEX: mov byte [EBP+edi],0ah
-                        inc esi
-                        dec edi
+             Print_HEX: mov byte [EBP-1],0ah
+                        neg esi
                         mov eax,4
                         mov ebx,1
                         mov ecx,EBP
-                        add ecx,edi
-                        mov edx,esi
+                        sub ecx,esi
+                        mov edx,9
                         int 80h
              F_HEX: pop edi
                     pop esi
