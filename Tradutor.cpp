@@ -1088,7 +1088,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 	saida << "				  	pop ecx" << endl;
 	saida << "				  	pop ebx" << endl;
 	saida << "				  	leave" << endl;
-	saida << "				  	ret 4" << endl;
+	saida << "				  	ret 4";
 
 	//Fim da Impressão das rotinas
 }
