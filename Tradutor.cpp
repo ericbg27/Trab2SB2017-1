@@ -301,10 +301,10 @@ void diretivas(istream &entrada, ostream &saida, BSS *var_bss) { //Procura pela 
 	while(getline(entrada,linha)) {
 		if(linha == "SECTION DATA") { //Se a linha do arquivo for igual a SECTION DATA, colocar flag_DATA em true e pegar proxima linha
 			flag_DATA = true;
-			saida << "section .data";
-			saida << "msg1 db 'Numero Invalido! Digite Novamente.',0ah";
-			saida << "msg0 db 'Numero Invalido!',0ah";
-			saida << "msg2 db 'Digite um caracter.',0ah";
+			saida << "section .data" << endl;
+			saida << "msg1 db 'Numero Invalido! Digite Novamente.',0ah" << endl;
+			saida << "msg0 db 'Numero Invalido!',0ah" << endl;
+			saida << "msg2 db 'Digite um caracter.',0ah" << endl;
 			saida << endl;
 			continue;
 		}
@@ -342,7 +342,6 @@ void diretivas(istream &entrada, ostream &saida, BSS *var_bss) { //Procura pela 
 					continue;
 				}
 			}
-			cout << dir << endl;
 			for(i=k;i<linha.length();i++) { //Pegando valor apos diretiva
 				valor += linha.at(i);
 			}
@@ -355,12 +354,10 @@ void diretivas(istream &entrada, ostream &saida, BSS *var_bss) { //Procura pela 
 			if(dir == "SPACE") { //Se for a diretiva SPACE, salvar dados para posterior gravacao
 				if(flag_SPACE == true)
 					var_bss = (BSS*)realloc(var_bss,(j+1)*sizeof(BSS)); //Alocando espaco
-				cout << "j: " << j << endl;
 				var_bss[j].variavel = var; //Salvando dados no elemento j do vetor
 				var_bss[j].size = valor;
 				flag_SPACE = true;
 				j++; //Incrementando contador de elementos
-				cout << "var: " << var << endl;
 			}
 		}
 	}
@@ -369,7 +366,6 @@ void diretivas(istream &entrada, ostream &saida, BSS *var_bss) { //Procura pela 
 		saida << "section .bss" << endl;
 		for(i=0;i<=j-1;i++) { //Imprimindo no arquivo de saida os elementos definidos pela diretiva SPACE na section .bss
 			saida << var_bss[i].variavel;
-			cout << var_bss[i].variavel << endl;
 			saida << " resd ";
 			saida << var_bss[i].size;
 			saida << endl;
@@ -605,7 +601,6 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 				num = atoi(op2.c_str());
 				num++;
 				op2 = InttoString(num);
-				cout << "op2: " << op2 << endl;
 				if(flag_rotulo == false) {
 					saida << "  push DWORD " << op2 << endl;
 					saida << "  push " << op1 << endl;
@@ -630,7 +625,6 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 				num = atoi(op2.c_str());
 				num++;
 				op2 = InttoString(num);
-				cout << "op2: " << op2 << endl;
 				if(flag_rotulo == false) {
 					saida << "  push DWORD " << op2 << endl;
 					saida << "  push " << op1 << endl;
@@ -701,6 +695,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 	saida << "               push edx" << endl;
 	saida << "               push esi" << endl;
 	saida << "               push edi" << endl;
+	saida << "               mov esi,0" << endl;
 	saida << "               mov word [EBP-20],0" << endl;
 	saida << "               Get_Int: mov eax,3" << endl;
 	saida << "                        mov ebx,0" << endl;
@@ -710,13 +705,13 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 	saida << "                        int 80h" << endl;
 	saida << "               mov ecx,eax" << endl;
 	saida << "               mov [EBP-24],eax" << endl;
-	saida << "               mov ecx,1" << endl;
+	saida << "               sub ecx,1" << endl;
 	saida << "               mov eax,0" << endl;
 	saida << "               mov edi,10" << endl;
 	saida << "               mov ebx,0" << endl;
 	saida << "               cmp byte [EBP-18],0x2D" << endl;
 	saida << "               je Negativo" << endl;
-	saida << "               Convert_Int: cmp byte [EBP-18+esi],0x30";
+	saida << "               Convert_Int: cmp byte [EBP-18+esi],0x30" << endl;
 	saida << "                            jl Invalido" << endl;
 	saida << "                            cmp byte [EBP-18+esi],0x39" << endl;
 	saida << "                            jg Invalido" << endl;
@@ -752,7 +747,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 	saida << "               Nega_Num: neg eax" << endl;
 	saida << "                         mov word [EBP-20],0" << endl;
 	saida << "                         jmp Armazena_Num" << endl;
-	saida << "               FIM: mov eax,[EBP-24]";
+	saida << "               FIM: mov eax,[EBP-24]" << endl;
 	saida << "                    pop edi" << endl;
 	saida << "                    pop esi" << endl;
 	saida << "                    pop edx" << endl;
@@ -783,7 +778,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 	saida << "                             je Imprime" << endl;
 	saida << "                             div ecx" << endl;
 	saida << "                             add edx,0x30" << endl;
-	saida << "                             cmp 0x30" << endl;
+	saida << "                             cmp edx,0x30" << endl;
 	saida << "                             jl Numero_Inv" << endl;
 	saida << "                             cmp edx,0x39" << endl;
 	saida << "                             jg Numero_Inv" << endl;
@@ -826,6 +821,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 	saida << "                           Sys_Write: mov eax,4" << endl;
 	saida << "                                      mov ebx,1" << endl;
 	saida << "                                      mov ecx,EBP" << endl;
+	saida << "										sub ecx,esi" << endl;
 	saida << "                                      mov edx,1" << endl;
 	saida << "                                      int 80h" << endl;
 	saida << "                                      inc esi" << endl;
@@ -840,12 +836,12 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 	saida << "                                      int 80h" << endl;
 	saida << "                                      inc dword [EBP-16]" << endl;
 	saida << "                                      jmp Exit_Func" << endl;
-	saida << "                           Insert_sign: mov byte [EBP-12+esi]" << endl;
+	saida << "                           Insert_sign: mov byte [EBP-12+esi],0x2D" << endl;
 	saida << "                                        inc esi" << endl;
 	saida << "                                        inc dword [EBP-16]" << endl;
 	saida << "                                        mov ebx,0" << endl;
 	saida << "                                        jmp Imprime" << endl;
-	saida << "                  Exit_Func: mov eax,[EBP-16]";
+	saida << "                  Exit_Func: mov eax,[EBP-16]" << endl;
 	saida << "                             pop edi" << endl;
 	saida << "                             pop esi" << endl;
 	saida << "                             pop edx" << endl;
@@ -906,8 +902,8 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 	saida << "                           add edi,1" << endl;
 	saida << "                           inc dword [EBP-4]" << endl;
 	saida << "                           cmp [EBP-4],esi" << endl;
-	saida << "                           je Fim_Leitura" << endl;
-	saida << "                           jmp Leitura" << endl;
+	saida << "                           je Fim_Escrita" << endl;
+	saida << "                           jmp Escrita" << endl;
 	saida << "                  Fim_Escrita: mov eax,[EBP-4]" << endl;
 	saida << "                               pop edi" << endl;
 	saida << "                               pop esi" << endl;
@@ -941,12 +937,20 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 	saida << "            xor edx,edx" << endl;
 	saida << "            Verifica_Char: cmp byte [EBP-9+esi],0x30" << endl;
 	saida << "                           jl Invalido_HEX" << endl;
-	saida << "                           cmp byte [EBP-9+esi],0x46" << endl;
-	saida << "                           jg Invalido_HEX" << endl;
+	saida << "                           cmp byte [EBP-9+esi],0x39" << endl;
+	saida << "                           jg Verifica_Char_HEX" << endl;
 	saida << "                           xor ebx,ebx" << endl;
 	saida << "                           mov BL,[EBP-9+esi]" << endl;
-	saida << "                           sub ebx,0x41" << endl;
-	saida << "                           add ebx,10" << endl;
+	saida << "                           sub ebx,0x30" << endl;
+	saida << "                           jmp Convert_to_Num" << endl;
+	saida << "            Verifica_Char_HEX: cmp byte [EBP-9+esi],0x41" << endl;
+	saida << "            					 jl Invalido_HEX" << endl;
+	saida << "            					 cmp byte [EBP-9+esi],0x46" << endl;
+	saida << "            					 jg Invalido_HEX" << endl;
+	saida << "            					 xor ebx,ebx" << endl;
+	saida << "            					 mov BL,[EBP-9+esi]" << endl;
+	saida << "            					 sub ebx,0x41" << endl;
+	saida << "            					 add ebx,10" << endl;
 	saida << "            Convert_to_Num: cmp edi,0" << endl;
 	saida << "			  				  je Last_Digit" << endl;
 	saida << "			  				  mov ecx,edi" << endl;
@@ -981,7 +985,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 	saida << "			  		   leave" << endl;
 	saida << "			  		   ret 4" << endl;
 
-	//LeerHexa
+	//EscreverHexa
 	saida << "	EscreverHexa: enter 13,0" << endl;
 	saida << "            	  push ebx" << endl;
 	saida << "          	  push ecx" << endl;
@@ -1035,48 +1039,56 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 
 	//LeerChar
 	saida << "	LeerChar: enter 2,0" << endl;
-	saida << "			  push ebx" << endl;
-	saida << "			  push ecx" << endl;
-	saida << "			  push edx" << endl;
-	saida << "			  InputC: mov eax,3" << endl;
-	saida << "			  		  mov ebx,0" << endl;
-	saida << "			  		  mov ecx,EBP" << endl;
-	saida << "			  		  sub ecx,2" << endl;
-	saida << "			  		  mov edx,2" << endl;
-	saida << "			  		  int 80h" << endl;
-	saida << "			  cmp byte [EBP-2],0ah" << endl;
-	saida << "			  je Espaco" << endl;
-	saida << "			  mov CL,[EBP-2]" << endl;
-	saida << "			  mov edx,[EBP+8]" << endl;
-	saida << "			  mov [edx],CL" << endl;
-	saida << "			  jmp FIM_C" << endl;
-	saida << "			  Espaco: mov eax,4" << endl;
-	saida << "			  		  mov ebx,1" << endl;
-	saida << "			  		  mov ecx,msg2" << endl;
-	saida << "					  mov edx,20" << endl;
-	saida << "					  int 80h" << endl;
-	saida << "					  jmp InputC" << endl;
-	saida << "			  FIM_C: pop edx" << endl;
-	saida << "				     pop ecx" << endl;
-	saida << "					 pop ebx" << endl;
-	saida << "					 leave" << endl;
-	saida << "					 ret 4" << endl;
+	saida << "			  	push ebx" << endl;
+	saida << "			  	push ecx" << endl;
+	saida << "			  	push edx" << endl;
+	saida << "			  	InputC: mov eax,3" << endl;
+	saida << "			  		  	mov ebx,0" << endl;
+	saida << "			  		  	mov ecx,EBP" << endl;
+	saida << "			  		  	sub ecx,2" << endl;
+	saida << "			  		  	mov edx,2" << endl;
+	saida << "			  		  	int 80h" << endl;
+	saida << "			  	cmp byte [EBP-2],0ah" << endl;
+	saida << "			  	je Espaco" << endl;
+	saida << "			  	mov CL,[EBP-2]" << endl;
+	saida << "			  	mov edx,[EBP+8]" << endl;
+	saida << "			  	mov [edx],CL" << endl;
+	saida << "			  	jmp FIM_C" << endl;
+	saida << "			  	Espaco: mov eax,4" << endl;
+	saida << "					      	mov ebx,1" << endl;
+	saida << "					      	mov ecx,msg2" << endl;
+	saida << "					      	mov edx,20" << endl;
+	saida << "					      	int 80h" << endl;
+	saida << "					      	jmp InputC" << endl;
+	saida << "			  	FIM_C: pop edx" << endl;
+	saida << "					     	pop ecx" << endl;
+	saida << "					     	pop ebx" << endl;
+	saida << "					     	leave" << endl;
+	saida << "					     	ret 4" << endl;
 
 	//EscreverChar
-	saida << "	EscreverChar: enter 0,0" << endl;
-	saida << "				  push ebx" << endl;
-	saida << "				  push ecx" << endl;
-	saida << "				  push edx" << endl;
-	saida << "				  mov eax,4" << endl;
-	saida << "				  mov ebx,1" << endl;
-	saida << "				  mov ecx,[EBP+8]" << endl;
-	saida << "				  mov edx,1" << endl;
-	saida << "				  int 80h" << endl;
-	saida << "				  pop edx" << endl;
-	saida << "				  pop ecx" << endl;
-	saida << "				  pop ebx" << endl;
-	saida << "				  leave" << endl;
-	saida << "				  ret 4" << endl;
+	saida << "	EscreverChar: enter 4,0" << endl;
+	saida << "				  	push ebx" << endl;
+	saida << "				  	push ecx" << endl;
+	saida << "				  	push edx" << endl;
+	saida << "				  	mov dword [EBP-4],0" << endl;
+	saida << "				  	mov byte [EBP-4],0ah" << endl;
+	saida << "				  	mov eax,4" << endl;
+	saida << "				  	mov ebx,1" << endl;
+	saida << "				  	mov ecx,[EBP+8]" << endl;
+	saida << "				  	mov edx,1" << endl;
+	saida << "				  	int 80h" << endl;
+	saida << "				  	mov eax,4" << endl;
+	saida << "				  	mov ebx,1" << endl;
+	saida << "				  	mov ecx,EBP" << endl;
+	saida << "				  	sub ecx,4" << endl;
+	saida << "				  	mov edx,1" << endl;
+	saida << "				  	int 80h" << endl;
+	saida << "				  	pop edx" << endl;
+	saida << "				  	pop ecx" << endl;
+	saida << "				  	pop ebx" << endl;
+	saida << "				  	leave" << endl;
+	saida << "				  	ret 4" << endl;
 
 	//Fim da Impressão das rotinas
 }
