@@ -211,14 +211,14 @@ while(getline(file,linha)) {
 				k = i;
 				break;
 			}
-			if(linha.at(i) == ':') {
+			if(linha.at(i) == ':') { //Se tiver rotulo
 				token += linha.at(i);
 				k = i+1;
 				break;
 			}
 			token += linha.at(i);
 		}
-		aux = no.busca_no(token,eh_rotulo);
+		aux = no.busca_no(token,eh_rotulo); //Procura se esta na lista EQU
 		if(eh_rotulo == true) {
 			linhain += aux;
 			linhain += ' ';
@@ -391,15 +391,10 @@ void diretivas(istream &entrada, ostream &saida) { //Procura pela SECTION DATA e
 			k = i;
 			if(k >= linha.length()-1) {
 				if(dir == "SPACE") {
-					cout << j << endl;
-					cout << "TESTE" << endl;
 					var_bss.push_back(BSS());
 					var_bss[j].variavel = var;
-					cout << "TESTE1" << endl;
 					valor = InttoString(num);
-					cout << "TESTE2" << endl;
 					var_bss[j].size = valor;
-					cout << "TESTE3" << endl;
 					flag_SPACE = true;
 					j++;
 				} else if (dir == "CONST") {
