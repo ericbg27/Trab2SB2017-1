@@ -76,7 +76,7 @@ string EQU_List::busca_no (string label, bool& exist) { //Busca no na lista
 		return tmpval;
 }
 
-void EQU_List::limpa_lista () {
+void EQU_List::limpa_lista () { //Limpa lista
 	no *tmp = head;
 	if (tmp == NULL)
 		return;
@@ -91,7 +91,7 @@ void EQU_List::limpa_lista () {
 //*********************************************** FIM DA LISTA EQU *******************************************************
 
 //********************************************* INICIO DA STRUCT BSS *****************************************************
-typedef struct BSS {
+typedef struct BSS { //Struct para a funcao diretivas, para definicao do que vai na section .bss
 	string variavel;
 	string size;
 }BSS;
@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
 		Preprocessamento(entrada,str1); //Realizando Preprocessamento
 	entrada.close(); // Fechando arquivo de entrada
 	entrada.clear();
-	str1.erase(str1.length()-4,4);
+	str1.erase(str1.length()-4,4); //Alterando o nome para o nome do arquivo de saida
 	str1 += ".s";
 	fstream saida (str1.c_str(),ios::out); //Criando arquivo de saida .s
 	str1.erase (str1.length()-2,2); //Abrindo arquivo Preprocessado
@@ -126,19 +126,23 @@ int main(int argc, char *argv[]) {
 	entradapreproc.clear(); //Retornando para o inicio do arquivo de entrada
 	entradapreproc.seekg(0,ios::beg);
 	saida.clear();
-	instrucoes(entradapreproc,saida);
-	entradapreproc.close();
+	instrucoes(entradapreproc,saida); //Traduzindo instrucoes e imprimindo section .text no arquivo de saida
+	entradapreproc.close(); //Fechando arquivos
 	saida.close();
 
 return 0; 
 }
 
 void Preprocessamento(istream &file, string nome_arq) {
+/*
+Funcao de preprocessamento que le o arquivo de entrada, retirando espacos, tabulacoes, linhas em branco e comentarios. Alem disso,
+realiza a verificacao das diretivas IF e EQU, gravando um arquivo de saida preprocessado baseado no arquivo de entrada da funcao.
+*/
 EQU_List no; //Objeto da lista da diretiva EQU
 string str, linha, strtemp;
 string token, token1, token2, dir, linhaout, linhain, aux, aux2, aux3, aux4;
 string rotulo, valorstr; //strings para abrir arquivo, guardar linhas, verificacoes de linhas e diretivas
-unsigned int i=0, j=0, k=0, tam2=0, tam3=0, lin_cont=0,lin_cont_aux=0; //Contadores e variaveis para tamanho de linha
+unsigned int i=0, j=0, k=0, tam2=0, tam3=0, lin_cont=0; //Contadores e variaveis para tamanho de linha
 int flagIF1 = 0, flagIF2 = 0;//Flag para verificar erros, se existe rotulo, flags para diretiva IF, flag para verificar se o programa esta na ordem correta
 bool eh_rotulo = false; //Variavel para definir se pertence a lista da diretiva EQU
 int posit = 0; //Inteiro para pegar posicao das diretivas IF, CONST e SPACE
@@ -151,7 +155,7 @@ fstream out (nome_arq.c_str(),ios::out);
 if(out.is_open()) {
 while(getline(file,linha)) {
 	lin_cont++;
-	pos = linha.find("\t");
+	pos = linha.find("\t"); //Procurando tabulacoes e substituindo-as por espacos
 	posit = pos;
 	if(posit > -1) {
 		while(posit > -1) {
@@ -166,7 +170,7 @@ while(getline(file,linha)) {
 			pos = linha.find("\t");
 			posit = pos;
 		}
-	}
+	} //Termino da procura por tabulacoes na linha
 	if(flagIF1 == 0 && flagIF2 == 1) { //Se achou a diretiva IF mas seu operando foi zero, ignorar linha
 	   flagIF2 = 0;
 	   continue;
@@ -191,10 +195,10 @@ while(getline(file,linha)) {
 			break;
 		}
 	}
-	if(i >= linha.length()-1 || linha.at(i) == ';')
-		continue;
+	if(i >= linha.length()-1 || linha.at(i) == ';') //Se chegou ao final da linha e nao encontrou nada ou o primeiro caracter foi ;
+		continue;									//indicando que a linha eh um comentario, ignorar
 //************************************** LEITURA DA LINHA DO ARQUIVO DE ENTRADA **************************************************
-	k = 0;
+	k = 0; //Zerando contadores
 	i = 0;
 	while(i < linha.length()) {
 		for(i=k;i<tam2;i++) { //Verifica espacos na linha
@@ -219,7 +223,7 @@ while(getline(file,linha)) {
 			token += linha.at(i);
 		}
 		aux = no.busca_no(token,eh_rotulo); //Procura se esta na lista EQU
-		if(eh_rotulo == true) {
+		if(eh_rotulo == true) { //Se for rotulo da diretiva EQU, substituir pelo valor correspondente
 			linhain += aux;
 			linhain += ' ';
 		} else {
@@ -243,7 +247,7 @@ while(getline(file,linha)) {
 	//************************** Verificacao da Diretiva EQU ******************************************
 		pos = linhain.find("EQU");
 		posit = pos;
-		if(posit > -1) {
+		if(posit > -1) { //Se achou a diretiva EQU na linha, armazenar rotulo e valor na lista EQU
 			k = 0;
 			for(i=k;i<tam3;i++) {
 				if(linhain.at(i) == ':') { //Armazenando rotulo, como esperado para a diretiva EQU
@@ -270,17 +274,17 @@ while(getline(file,linha)) {
 
 		pos = linhain.find("IF"); //Procura diretiva IF, para verificacao
 		posit = pos;
-		if(posit > -1) {
+		if(posit > -1) { //Se achou a diretiva IF, verificar valor após
 			for(j=pos+3;j<linhain.length();j++) {
 				aux += linhain.at(j);
 			}
 			if(atoi(aux.c_str()) != 0) {
-				flagIF1 = 1;
+				flagIF1 = 1; //Indica que o numero apos o IF eh diferente de 0
 			}
 			flagIF2 = 1; //Indica que entrou na diretiva IF, servindo para que nao se imprima a proxima linha
 			continue;
 		}
-	out << linhain;
+	out << linhain; //Imprimindo linha no arquivo de saida
 	out << endl;
 	linhain.clear();
 	}
@@ -297,7 +301,7 @@ void diretivas(istream &entrada, ostream &saida) { //Procura pela SECTION DATA e
 	string linha, var, dir, valor;
 	bool flag_DATA = false, flag_SPACE = false; //Flag para indicar SECTION DATA e para indicar diretiva SPACE
 	unsigned int i=0, k=0, j=0,num=1;
-	vector<BSS> var_bss;
+	vector<BSS> var_bss; //Vetor para as variaveis da section .bss
 	while(getline(entrada,linha)) {
 		if(linha == "SECTION DATA") { //Se a linha do arquivo for igual a SECTION DATA, colocar flag_DATA em true e pegar proxima linha
 			flag_DATA = true;
@@ -314,7 +318,7 @@ void diretivas(istream &entrada, ostream &saida) { //Procura pela SECTION DATA e
 		if(flag_DATA == false) { //Se nao chegou na SECTION DATA, pegar proxima linha
 			continue;
 		} else {
-			var.clear();
+			var.clear(); //Limpando strings
 			valor.clear();
 			dir.clear();
 			k = 0;
@@ -333,12 +337,12 @@ void diretivas(istream &entrada, ostream &saida) { //Procura pela SECTION DATA e
 				dir += linha.at(i);		
 			}
 			k = i;
-			if(k >= linha.length()-1) {
+			if(k >= linha.length()-1) { //Se SPACE nao possuir operando
 				if(dir == "SPACE") {
 					var_bss.push_back(BSS());
 					var_bss[j].variavel = var;
 					valor = InttoString(num);
-					var_bss[j].size = valor;
+					var_bss[j].size = valor; //Insere 1 no valor da variavel
 					flag_SPACE = true;
 					j++;
 				continue;
@@ -374,7 +378,11 @@ void diretivas(istream &entrada, ostream &saida) { //Procura pela SECTION DATA e
 	}
 }
 
-void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instrucoes do assembly inventado
+void instrucoes(istream &entrada,ostream &saida) { 
+	/*
+	Faz a traducao das instrucoes do assembly inventado, verificando se os operandos sao vetores ou nao e gravando o respectivo 
+	codigo IA-32 no arquivo de saida
+	*/
 	string line, rotulo, inst, op1, op2, vet, vet1;
 	unsigned int i1=0,k1=0,num=0,num1=4,num2=4;
 	bool flag_TEXT=false, flag_rotulo, flag_Vet=false; //Flag para indicar que se esta na SECTION TEXT, flag para indicar que ha rotulo e flag para indicar tratamento de vetor
@@ -385,7 +393,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 	saida << "  mov ebx,0" << endl; //Zerando contador escolhido (ebx)
 
 	while(getline(entrada,line)) {
-		if(line == "SECTION TEXT") {
+		if(line == "SECTION TEXT") { //Se chegar na SECTION TEXT comecar a procurar por instrucoes
 			flag_TEXT = true;
 		}
 		if(line == "SECTION DATA") {
@@ -408,7 +416,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 			flag_Vet = false;
 
 			for(i1=0;i1<line.length();i1++) {
-				 if(line.at(i1) == ':') { //Se a linha possuir rotulo
+				 if(line.at(i1) == ':') { //Se a linha possuir rotulo, pegar rotulo e ativar flag_rotulo
 					rotulo += line.at(i1);
 					saida << "  " << rotulo;
 					k1 = i1+2;
@@ -436,25 +444,17 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 					}
 					op1 += line.at(i1);
 				}
-				if(i1 == line.length())
+				if(i1 == line.length()) //Caso nao estejamos tratando com vetores
 					i1--;
 				if(i1 >= line.length()-1) //Se nao estamos tratando com vetores
 					saida << "  add ebx," << '[' << op1 << ']' << endl; //Gravando codigo IA32 correspondente na saida
-				if(line.at(i1) == '+') {
-					for(i1=k1;i1<line.length();i1++) {
-						if(line.at(i1) != ' ') {
-							k1 = i1;
-							for(i1=k1;i1<line.length();i1++) {
-								if(line.at(i1) == ' ') {
-									break;
-								}
-								vet += line.at(i1);
-							}
-						}
+				if(line.at(i1) == '+') { //Caso estejamos tratando com vetores
+					for(i1=k1;i1<line.length();i1++) { //Pegando indice do vetor
+						vet += line.at(i1);
 					}
-					num = atoi(vet.c_str());
+					num = atoi(vet.c_str()); //Convertendo indice para inteiro e multiplicando por 4 (DWORD)
 					num1 = num1*num;
-					vet = InttoString(num1);
+					vet = InttoString(num1); //Convertendo indice de volta para string
 					saida << "  add ebx," << '[' << op1 << '+' << vet << ']' << endl; //Gravando codigo IA32 correspondente na saida
 				}
 
@@ -470,21 +470,13 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 					i1--;
 				if(i1 >= line.length()-1) //Se nao estamos tratando com vetores
 					saida << "  sub ebx," << '[' << op1 << ']' << endl; //Gravando codigo IA32 correspondente na saida
-				if(line.at(i1) == '+') {
-					for(i1=k1;i1<line.length();i1++) {
-						if(line.at(i1) != ' ') {
-							k1 = i1;
-							for(i1=k1;i1<line.length();i1++) {
-								if(line.at(i1) == ' ') {
-									break;
-								}
-								vet += line.at(i1);
-							}
-						}
+				if(line.at(i1) == '+') { //Caso estejamos tratando com vetores
+					for(i1=k1;i1<line.length();i1++) { //Pegando indice do vetor
+						vet += line.at(i1);
 					}
-					num = atoi(vet.c_str());
+					num = atoi(vet.c_str()); //Convertendo indice para inteiro e multiplicando por 4 (DWORD)
 					num1 = num1*num;
-					vet = InttoString(num1);
+					vet = InttoString(num1); //Convertendo indice de volta para string
 					saida << "  sub ebx," << '[' << op1 << '+' << vet << ']' << endl; //Gravando codigo IA32 correspondente na saida
 				}
 
@@ -499,7 +491,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 				if(i1 == line.length())
 					i1--;
 				if(i1 >= line.length()-1) { //Se nao estamos tratando com vetores
-					if(flag_rotulo == false) {
+					if(flag_rotulo == false) { //Se nao tiver rotulo
 						saida << "  push eax" << endl; //Gravando codigo IA32 correspondente na saida
 						saida << "  mov eax,ebx" << endl;
 						saida << "  imul dword " <<  '[' << op1 << ']' << endl;
@@ -513,14 +505,14 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 						saida << "      pop eax" << endl;
 					}
 				}
-				if(line.at(i1) == '+') {
-					for(i1=k1;i1<line.length();i1++) {
+				if(line.at(i1) == '+') { //Caso estejamos tratando com vetores
+					for(i1=k1;i1<line.length();i1++) { //Pegando indice do vetor
 						vet += line.at(i1);
 					}
-					num = atoi(vet.c_str());
+					num = atoi(vet.c_str()); //Convertendo indice para inteiro e multiplicando por 4 (DWORD)
 					num1 = num1*num;
-					vet = InttoString(num1);
-					if(flag_rotulo == false) {
+					vet = InttoString(num1); //Convertendo indice de volta para string
+					if(flag_rotulo == false) { //Se nao tiver rotulo
 						saida << "  push eax" << endl; //Gravando codigo IA32 correspondente na saida
 						saida << "  mov eax,ebx" << endl;
 						saida << "  imul dword " << '[' << op1 << '+' << vet << ']' << endl; 
@@ -546,7 +538,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 				if(i1 == line.length())
 					i1--;
 				if(i1 >= line.length()-1) { //Se nao estamos tratando com vetores
-					if(flag_rotulo == false) {
+					if(flag_rotulo == false) { //Se nao tiver rotulo
 						saida << "  push eax" << endl; //Gravando codigo IA32 correspondente na saida
 						saida << "  push edx" << endl;
 						saida << "  mov eax,ebx" << endl;
@@ -566,14 +558,14 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 						saida << "      pop eax" << endl;
 					}
 				}
-				if(line.at(i1) == '+') {
-					for(i1=k1;i1<line.length();i1++) {
+				if(line.at(i1) == '+') { //Caso estejamos tratando com vetores
+					for(i1=k1;i1<line.length();i1++) { //Pegando indice do vetor
 						vet += line.at(i1);
 					}
-					num = atoi(vet.c_str());
+					num = atoi(vet.c_str()); //Convertendo indice para inteiro e multiplicando por 4 (DWORD)
 					num1 = num1*num;
-					vet = InttoString(num1);
-					if(flag_rotulo == false) {
+					vet = InttoString(num1); //Convertendo indice de volta para string
+					if(flag_rotulo == false) { //Se nao tiver rotulo
 						saida << "  push eax" << endl; //Gravando codigo IA32 correspondente na saida
 						saida << "  push edx" << endl;
 						saida << "  mov eax,ebx" << endl;
@@ -604,7 +596,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 				for(i1=k1;i1<line.length();i1++) { //Pegando operando
 					op1 += line.at(i1);
 				}
-				if(flag_rotulo == false) {
+				if(flag_rotulo == false) { //Se nao tiver rotulo
 				saida << "  cmp ebx,0" << endl;
 				saida << "  jl " << op1 << endl;
 				} else {
@@ -616,7 +608,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 				for(i1=k1;i1<line.length();i1++) { //Pegando operando
 					op1 += line.at(i1);
 				}
-				if(flag_rotulo == false) {
+				if(flag_rotulo == false) { //Se nao tiver rotulo
 					saida << "  cmp ebx,0" << endl;
 					saida << "  jg " << op1 << endl;
 				} else {
@@ -628,7 +620,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 				for(i1=k1;i1<line.length();i1++) { //Pegando operando
 					op1 += line.at(i1);
 				}
-				if(flag_rotulo == false) {
+				if(flag_rotulo == false) { //Se nao tiver rotulo
 					saida << "  cmp ebx,0" << endl;
 					saida << "  je " << op1 << endl;
 				} else {
@@ -648,21 +640,13 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 					i1--;
 				if(i1 >= line.length()-1)  //Se nao estamos tratando com vetores
 					saida << "  mov ebx," << '[' << op1 << ']' << endl;
-				if(line.at(i1) == '+') {
-					for(i1=k1;i1<line.length();i1++) {
-						if(line.at(i1) != ' ') {
-							k1 = i1;
-							for(i1=k1;i1<line.length();i1++) {
-								if(line.at(i1) == ' ') {
-									break;
-								}
-								vet += line.at(i1);
-							}
-						}
+				if(line.at(i1) == '+') { //Caso estejamos tratando com vetores
+					for(i1=k1;i1<line.length();i1++) { //Pegando indice do vetor
+						vet += line.at(i1);
 					}
-					num = atoi(vet.c_str());
+					num = atoi(vet.c_str()); //Convertendo indice para inteiro e multiplicando por 4 (DWORD)
 					num1 = num1*num;
-					vet = InttoString(num1);
+					vet = InttoString(num1); //Convertendo indice de volta para string
 					saida << "  mov ebx," << '[' << op1 << '+' << vet << ']' << endl; //Gravando codigo IA32 correspondente na saida
 				}
 
@@ -679,21 +663,13 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 				}
 				if(i1 >= line.length()-1)  //Se nao estamos tratando com vetores
 					saida << "  mov " << '[' << op1 << ']' << ",ebx" << endl;
-				if(line.at(i1) == '+') {
-					for(i1=k1;i1<line.length();i1++) {
-						if(line.at(i1) != ' ') {
-							k1 = i1;
-							for(i1=k1;i1<line.length();i1++) {
-								if(line.at(i1) == ' ') {
-									break;
-								}
-								vet += line.at(i1);
-							}
-						}
+				if(line.at(i1) == '+') { //Caso estejamos tratando com vetores
+					for(i1=k1;i1<line.length();i1++) { //Pegando indice do vetor
+						vet += line.at(i1);
 					}
-					num = atoi(vet.c_str());
+					num = atoi(vet.c_str()); //Convertendo indice para inteiro e multiplicando por 4 (DWORD)
 					num1 = num1*num;
-					vet = InttoString(num1);
+					vet = InttoString(num1); //Convertendo indice de volta para string
 					saida << "  mov " << '[' << op1 << '+' << vet << ']' << ",ebx" << endl; //Gravando codigo IA32 correspondente na saida
 				}
 
@@ -701,7 +677,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 				for(i1=k1;i1<line.length();i1++) { //Pegando operando
 					op1 += line.at(i1);
 				}
-				if(flag_rotulo == false) {
+				if(flag_rotulo == false) { //Se nao tiver rotulo
 					saida << "  mov eax,1" << endl;
 					saida << "  mov ebx,0" << endl;
 					saida << "  int 80h" << endl;
@@ -721,8 +697,8 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 				}
 				if(line.at(i1) == '+') { //Se estivermos trabalhando com vetores no primeiro operando
 					flag_Vet = true;
-					for(i1=k1;i1<line.length();i1++) {
-						if(line.at(i1) == ',') {
+					for(i1=k1;i1<line.length();i1++) { //Pegando indice do vetor (primeiro operando)
+						if(line.at(i1) == ',') { 
 							k1 = i1+1;
 							break;
 						}
@@ -736,10 +712,10 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 					}
 					op2 += line.at(i1);
 				}
-				if(i1 == line.length())
+				if(i1 == line.length()) 
 					i1--;
-				if (i1 >= line.length()-1 && flag_Vet == false) {
-					if(flag_rotulo == false) {
+				if (i1 >= line.length()-1 && flag_Vet == false) { //Se nenhum dos operandos for vetor 
+					if(flag_rotulo == false) { //Se nao tiver rotulo
 						saida << "  push eax" << endl;
 						saida << "  mov eax,[" << op1 << ']' << endl;
 						saida << "  mov [" << op2 << "],eax" << endl;
@@ -752,13 +728,13 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 					}  
 				}	
 				if(line.at(i1) == '+' && flag_Vet == false) { //Se estivermos trabalhando com vetores apenas no segundo operando
-					for(i1=k1;i1<line.length();i1++) {
+					for(i1=k1;i1<line.length();i1++) { //Pegando indice do vetor, segundo operando
 						vet1 += line.at(i1);
 					}
-					num = atoi(vet1.c_str());
+					num = atoi(vet1.c_str()); //Convertendo indice para inteiro e multiplicando por 4 (DWORD)
 					num2 = num2*num;
-					vet1 = InttoString(num2);
-					if(flag_rotulo == false) {
+					vet1 = InttoString(num2); //Convertendo indice de volta para string
+					if(flag_rotulo == false) { //Se nao tiver rotulo
 						saida << "  push eax" << endl;
 						saida << "  mov eax,[" << op1 << ']' << endl;
 						saida << "  mov [" << op2 << '+' << vet1 << "],eax" << endl;
@@ -770,10 +746,10 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 						saida << "  pop eax" << endl;
 					}  
 				} else if (line.at(i1) != '+' && flag_Vet == true) { //Se estivermos trabalhando com vetores apenas no primeiro operando
-					num = atoi(vet.c_str());
+					num = atoi(vet.c_str()); //Convertendo indice para inteiro e multiplicando por 4 (DWORD)
 					num1 = num1*num;
-					vet = InttoString(num1);
-					if(flag_rotulo == false) {
+					vet = InttoString(num1); //Convertendo indice de volta para string
+					if(flag_rotulo == false) { //Se nao tiver rotulo
 						saida << "  push eax" << endl;
 						saida << "  mov eax,[" << op1 << '+' << vet << ']' << endl;
 						saida << "  mov [" << op2 << "],eax" << endl;
@@ -788,13 +764,13 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 					for(i1=k1;i1<line.length();i1++) {
 						vet1 += line.at(i1);
 					}
-					num = atoi(vet.c_str());
+					num = atoi(vet.c_str()); //Convertendo indice para inteiro e multiplicando por 4 (DWORD)
 					num1 = num1*num;
-					vet = InttoString(num1);
-					num = atoi(vet1.c_str());
+					vet = InttoString(num1);  //Convertendo indice de volta para string
+					num = atoi(vet1.c_str()); //Convertendo indice para inteiro e multiplicando por 4 (DWORD)
 					num2 = num2*num;
-					vet1 = InttoString(num2);
-					if(flag_rotulo == false) {
+					vet1 = InttoString(num2);  //Convertendo indice de volta para string
+					if(flag_rotulo == false) { //Se nao tiver rotulo
 						saida << "  push eax" << endl;
 						saida << "  mov eax,[" << op1 << '+' << vet << ']' << endl;
 						saida << "  mov [" << op2 << '+' << vet1 << "],eax" << endl;
@@ -809,7 +785,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 
 			} else if (inst == "INPUT") {
 				for(i1=k1;i1<line.length();i1++) { //Pegando operando
-					if(line.at(i1) == ' ' || line.at(i1) == '+'){ //Verificando se estamos tratando com vetores
+					if(line.at(i1) == '+'){ //Verificando se estamos tratando com vetores
 						k1 = i1+1;
 						break;
 					}
@@ -818,16 +794,8 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 				if(i1 >= line.length()) { //Se nao estamos tratando com vetores
 					i1--;
 				}
-				if(line.at(i1) == ' ') {
-					for(i1=k1;i1<line.length();i1++) {
-						if(line.at(i1) == '+') {
-							k1 = i1+1;
-							break;
-						}
-					}
-				}
 				if(i1 >= line.length()-1) { //Se nao estamos tratando com vetores
-					if(flag_rotulo == false) {
+					if(flag_rotulo == false) { //Se nao tiver rotulo
 						saida << "  push " << op1 << endl;
 						saida << "  call LeerInteiro" << endl;
 					} else {
@@ -835,22 +803,14 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 						saida << "      call LeerInteiro" << endl;
 					}
 				}
-				if(line.at(i1) == '+') {
-					for(i1=k1;i1<line.length();i1++) {
-						if(line.at(i1) != ' ') {
-							k1 = i1;
-							for(i1=k1;i1<line.length();i1++) {
-								if(line.at(i1) == ' ') {
-									break;
-								}
-								vet += line.at(i1);
-							}
-						}
+				if(line.at(i1) == '+') { //Se estivermos trabalhando com vetores apenas no segundo operando
+					for(i1=k1;i1<line.length();i1++) { //Pegando indice do vetor
+						vet += line.at(i1);
 					}
-					num = atoi(vet.c_str());
+					num = atoi(vet.c_str()); //Convertendo indice para inteiro e multiplicando por 4 (DWORD)
 					num1 = num1*num;
-					vet = InttoString(num1);
-					if(flag_rotulo == false) {
+					vet = InttoString(num1);  //Convertendo indice de volta para string
+					if(flag_rotulo == false) { //Se nao tiver rotulo
 						saida << "	mov eax," << op1 << endl;
 						saida << "	add eax," << vet << endl;
 						saida << "  push eax" << endl;
@@ -865,7 +825,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 
 			} else if (inst == "OUTPUT") {
 				for(i1=k1;i1<line.length();i1++) { //Pegando operando
-					if(line.at(i1) == ' ' || line.at(i1) == '+'){ //Verificando se estamos tratando com vetores
+					if(line.at(i1) == '+'){ //Verificando se estamos tratando com vetores
 						k1 = i1+1;
 						break;
 					}
@@ -874,16 +834,8 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 				if(i1 >= line.length()) { //Se nao estamos tratando com vetores
 					i1--;
 				}
-				if(line.at(i1) == ' ') {
-					for(i1=k1;i1<line.length();i1++) {
-						if(line.at(i1) == '+') {
-							k1 = i1+1;
-							break;
-						}
-					}
-				}
 				if(i1 >= line.length()-1) { //Se nao estamos tratando com vetores
-					if(flag_rotulo == false) {
+					if(flag_rotulo == false) { //Se nao tiver rotulo
 						saida << "  push " << op1 << endl;
 						saida << "  call EscreverInteiro" << endl;
 					} else {
@@ -891,22 +843,14 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 						saida << "      call EscreverInteiro" << endl;
 					}
 				}
-				if(line.at(i1) == '+') {
-					for(i1=k1;i1<line.length();i1++) {
-						if(line.at(i1) != ' ') {
-							k1 = i1;
-							for(i1=k1;i1<line.length();i1++) {
-								if(line.at(i1) == ' ') {
-									break;
-								}
-								vet += line.at(i1);
-							}
-						}
+				if(line.at(i1) == '+') { //Se estivermos tratando com vetores
+					for(i1=k1;i1<line.length();i1++) { //Pegando indice do vetor
+						vet += line.at(i1);
 					}
-					num = atoi(vet.c_str());
+					num = atoi(vet.c_str()); //Convertendo indice para inteiro e multiplicando por 4 (DWORD)
 					num1 = num1*num;
-					vet = InttoString(num1);
-					if(flag_rotulo == false) {
+					vet = InttoString(num1); //Convertendo indice de volta para string
+					if(flag_rotulo == false) { //Se nao tiver rotulo
 						saida << "	mov eax," << op1 << endl;
 						saida << "	add eax," << vet << endl;
 						saida << "  push eax" << endl;
@@ -921,30 +865,30 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 
 			} else if (inst == "S_INPUT") {
 				for(i1=k1;i1<line.length();i1++) { //Pegando operando
-					if(line.at(i1) == ',' || line.at(i1) == '+') {
+					if(line.at(i1) == ',' || line.at(i1) == '+') { //Verificando se estamos ou nao trabalhando com vetores
 						k1 = i1 + 1;
 						break;
 					}
 					op1 += line.at(i1);
 				}
-				if(line.at(i1) == '+') {
+				if(line.at(i1) == '+') { //Se estamos trabalhando com vetores, o que so eh possivel no primeiro operando
 					flag_Vet = true;
 					for(i1=k1;i1<line.length();i1++) {
-						if(line.at(i1) == ',') {
+						if(line.at(i1) == ',') { //Pegando indice do vetor
 							k1 = i1 + 1;
 							break;
 						}
 						vet += line.at(i1);
 					}
 				}
-				for(i1=k1;i1<line.length();i1++) {
+				for(i1=k1;i1<line.length();i1++) { //Pegando tamanho da string (segundo operando)
 					op2 += line.at(i1);
 				}
-				num = atoi(op2.c_str());
-				num++;
-				op2 = InttoString(num);
-				if(flag_Vet == false) {
-					if(flag_rotulo == false) {
+				num = atoi(op2.c_str()); //Convertendo tamanho da string para int
+				num++; //Somando um por conta do pulo de linha presente no IA 32
+				op2 = InttoString(num); //Convertendo tamanho alterado de volta para string
+				if(flag_Vet == false) { //Se nao estivermos trabalhando com vetores
+					if(flag_rotulo == false) { //Se nao tiver rotulo
 						saida << "  push DWORD " << op2 << endl;
 						saida << "  push " << op1 << endl;
 						saida << "  call LeerString" << endl;
@@ -953,11 +897,11 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 						saida << "      push " << op1 << endl;
 						saida << "      call LeerString" << endl;
 					}
-				} else {
-					num = atoi(vet.c_str());
-					num1 = num1*num;
-					vet = InttoString(num1);
-					if(flag_rotulo == false) {
+				} else { //Se estivermos trabalhando com vetores
+					num = atoi(vet.c_str()); //Convertendo indice do vetor para inteiro e multiplicando por 4 (DWORD)
+					num1 = num1*num; 
+					vet = InttoString(num1); //Convertendo indice de volta para string
+					if(flag_rotulo == false) { //Se nao tiver rotulo
 						saida << "  push DWORD " << op2 << endl;
 						saida << "	mov eax," << op1 << endl;
 						saida << "	add eax," << vet << endl;
@@ -974,30 +918,30 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 
 			} else if (inst == "S_OUTPUT") {
 				for(i1=k1;i1<line.length();i1++) { //Pegando operando
-					if(line.at(i1) == ',' || line.at(i1) == '+') {
+					if(line.at(i1) == ',' || line.at(i1) == '+') { //Verificando se estamos ou nao trabalhando com vetores
 						k1 = i1 + 1;
 						break;
 					}
 					op1 += line.at(i1);
 				}
-				if(line.at(i1) == '+') {
+				if(line.at(i1) == '+') { //Se estamos trabalhando com vetores, o que so eh possivel no primeiro operando
 					flag_Vet = true;
-					for(i1=k1;i1<line.length();i1++) {
-						if(line.at(i1) == ',') {
+					for(i1=k1;i1<line.length();i1++) { //Pegando indice do vetor
+						if(line.at(i1) == ',') { 
 							k1 = i1 + 1;
 							break;
 						}
 						vet += line.at(i1);
 					}
 				}
-				for(i1=k1;i1<line.length();i1++) {
+				for(i1=k1;i1<line.length();i1++) { //Pegando tamanho da string (segundo operando)
 					op2 += line.at(i1);
 				}
-				num = atoi(op2.c_str());
-				num++;
-				op2 = InttoString(num);
-				if(flag_Vet == false) {
-					if(flag_rotulo == false) {
+				num = atoi(op2.c_str()); //Convertendo tamanho da string para int
+				num++; //Somando um por conta do pulo de linha presente no IA 32
+				op2 = InttoString(num); //Convertendo tamanho alterado de volta para string
+				if(flag_Vet == false) { //Se nao estivermos trabalhando com vetores
+					if(flag_rotulo == false) { //Se nao tiver rotulo
 						saida << "  push DWORD " << op2 << endl;
 						saida << "  push " << op1 << endl;
 						saida << "  call EscreverString" << endl;
@@ -1006,11 +950,11 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 						saida << "      push " << op1 << endl;
 						saida << "      call EscreverString" << endl;
 					}
-				} else {
-					num = atoi(vet.c_str());
+				} else { //Se estivermos trabalhando com vetores
+					num = atoi(vet.c_str()); //Convertendo indice do vetor para inteiro e multiplicando por 4 (DWORD)
 					num1 = num1*num;
-					vet = InttoString(num1);
-					if(flag_rotulo == false) {
+					vet = InttoString(num1); //Convertendo indice de volta para string
+					if(flag_rotulo == false) { //Se nao tiver rotulo
 						saida << "  push DWORD " << op2 << endl;
 						saida << "	mov eax," << op1 << endl;
 						saida << "	add eax," << vet << endl;
@@ -1027,16 +971,16 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 
 			} else if (inst == "H_INPUT") {
 				for(i1=k1;i1<line.length();i1++) { //Pegando operando
-					if(line.at(i1) == '+') {
+					if(line.at(i1) == '+') { //Verificando se estamos trabalhando com vetores
 						k1 = i1+1;
 						break;
 					}
 					op1 += line.at(i1);
 				}
-				if(i1 == line.length())
+				if(i1 == line.length()) //Se nao estivermos trabalhando com vetores
 					i1--;
-				if(i1 >= line.length()-1) {
-					if(flag_rotulo == false) {
+				if(i1 >= line.length()-1) { //Se nao estivermos trabalhando com vetores
+					if(flag_rotulo == false) { //Se nao tiver rotulo
 						saida << "  push " << op1 << endl;
 						saida << "  call LeerHexa" << endl;
 					} else {
@@ -1044,14 +988,14 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 						saida << "      call LeerHexa" << endl;
 					}
 				}
-				if(line.at(i1) == '+') {
-					for(i1=k1;i1<line.length();i1++) {
+				if(line.at(i1) == '+') { //Se estivermos trabalhando com vetores
+					for(i1=k1;i1<line.length();i1++) { //Pegando indice do vetor
 						vet += line.at(i1);
 					}
-					num = atoi(vet.c_str());
+					num = atoi(vet.c_str()); //Convertendo indice do vetor para inteiro e multiplicando por 4 (DWORD)
 					num1 = num1*num;
-					vet = InttoString(num1);
-					if(flag_rotulo == false) {
+					vet = InttoString(num1); //Convertendo indice de volta para string
+					if(flag_rotulo == false) { //Se nao tiver rotulo
 						saida << "	mov eax," << op1 << endl;
 						saida << "	add eax," << vet << endl;
 						saida << "  push eax" << endl;
@@ -1066,16 +1010,16 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 
 			} else if (inst == "H_OUTPUT") {
 				for(i1=k1;i1<line.length();i1++) { //Pegando operando
-					if(line.at(i1) == '+') {
+					if(line.at(i1) == '+') { //Verificando se estamos trabalhando com vetores
 						k1 = i1+1;
 						break;
 					}
 					op1 += line.at(i1);
 				}
-				if(i1 == line.length())
+				if(i1 == line.length()) //Se nao estivermos trabalhando com vetores
 					i1--;
-				if(i1 >= line.length()-1) {
-					if(flag_rotulo == false) {
+				if(i1 >= line.length()-1) { //Se nao estivermos trabalhando com vetores
+					if(flag_rotulo == false) { //Se nao tiver rotulo
 						saida << "  push dword [" << op1 << ']' << endl;
 						saida << "  call EscreverHexa" << endl;
 					} else {
@@ -1083,14 +1027,14 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 						saida << "      call EscreverHexa" << endl;
 					}
 				}
-				if(line.at(i1) == '+') {
-					for(i1=k1;i1<line.length();i1++) {
+				if(line.at(i1) == '+') { //Se estivermos trabalhando com vetores
+					for(i1=k1;i1<line.length();i1++) { //Pegando indice do vetor
 						vet += line.at(i1);
 					}
-					num = atoi(vet.c_str());
+					num = atoi(vet.c_str()); //Convertendo indice do vetor para inteiro e multiplicando por 4 (DWORD)
 					num1 = num1*num;
-					vet = InttoString(num1);
-					if(flag_rotulo == false) {
+					vet = InttoString(num1); //Convertendo indice de volta para string
+					if(flag_rotulo == false) { //Se nao tiver rotulo
 						saida << "  push dword [" << op1 << '+' << vet << ']' << endl;
 						saida << "  call EscreverHexa" << endl;
 					} else {
@@ -1101,16 +1045,16 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 
 			} else if (inst == "C_INPUT") {
 				for(i1=k1;i1<line.length();i1++) { //Pegando operando
-					if(line.at(i1) == '+') {
+					if(line.at(i1) == '+') { //Verificando se estamos trabalhando com vetores
 						k1 = i1+1;
 						break;
 					}
 					op1 += line.at(i1);
 				}
-				if(i1 == line.length())
+				if(i1 == line.length()) //Se nao estivermos trabalhando com vetores
 					i1--;
-				if(i1 >= line.length()-1) {
-					if(flag_rotulo == false) {
+				if(i1 >= line.length()-1) { //Se nao estivermos trabalhando com vetores
+					if(flag_rotulo == false) { //Se nao tiver rotulo
 						saida << "  push " << op1 << endl;
 						saida << "  call LeerChar" << endl;
 					} else {
@@ -1118,14 +1062,14 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 						saida << "      call LeerChar" << endl;
 					}
 				}
-				if(line.at(i1) == '+') {
-					for(i1=k1;i1<line.length();i1++) {
+				if(line.at(i1) == '+') { //Se estivermos trabalhando com vetores
+					for(i1=k1;i1<line.length();i1++) { //Pegando indice do vetor
 						vet += line.at(i1);
 					}
-					num = atoi(vet.c_str());
+					num = atoi(vet.c_str()); //Convertendo indice do vetor para inteiro e multiplicando por 4 (DWORD)
 					num1 = num1*num;
-					vet = InttoString(num1);
-					if(flag_rotulo == false) {
+					vet = InttoString(num1); //Convertendo indice de volta para string
+					if(flag_rotulo == false) { //Se nao tiver rotulo
 						saida << "	mov eax," << op1 << endl;
 						saida << "	add eax," << vet << endl;
 						saida << "  push eax" << endl;
@@ -1140,16 +1084,16 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 
 			} else if (inst == "C_OUTPUT") {
 				for(i1=k1;i1<line.length();i1++) { //Pegando operando
-					if(line.at(i1) == '+') {
+					if(line.at(i1) == '+') { //Verificando se estamos trabalhando com vetores
 						k1 = i1+1;
 						break;
 					}
 					op1 += line.at(i1);
 				}
-				if(i1 == line.length())
+				if(i1 == line.length()) //Se nao estivermos trabalhando com vetores
 					i1--;
-				if(i1 >= line.length()-1) {
-					if(flag_rotulo == false) {
+				if(i1 >= line.length()-1) { //Se nao estivermos trabalhando com vetores
+					if(flag_rotulo == false) { //Se nao tiver rotulo
 						saida << "  push " << op1 << endl;
 						saida << "  call EscreverChar" << endl;
 					} else {
@@ -1157,14 +1101,14 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 						saida << "      call EscreverChar" << endl;
 					}
 				}
-				if(line.at(i1) == '+') {
-					for(i1=k1;i1<line.length();i1++) {
+				if(line.at(i1) == '+') { //Se estivermos trabalhando com vetores
+					for(i1=k1;i1<line.length();i1++) { //Pegando indice do vetor
 						vet += line.at(i1);
 					}
-					num = atoi(vet.c_str());
+					num = atoi(vet.c_str()); //Convertendo indice do vetor para inteiro e multiplicando por 4 (DWORD)
 					num1 = num1*num;
-					vet = InttoString(num1);
-					if(flag_rotulo == false) {
+					vet = InttoString(num1); //Convertendo indice do vetor de volta para string
+					if(flag_rotulo == false) { //Se nao tiver rotulo
 						saida << "	mov eax," << op1 << endl;
 						saida << "	add eax," << vet << endl;
 						saida << "  push eax" << endl;
@@ -1180,7 +1124,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 			//Fim da traducao da instrucao
 		}
 	}
-	//Impressao das rotinas
+	//Impressao das rotinas no arquivo de saida
 	//LeerInteiro
 	saida << "  LeerInteiro: enter 24,0" << endl;
 	saida << "               push ebx" << endl;
@@ -1587,7 +1531,7 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 }
 
 
-string InttoString (int Num) {
+string InttoString (int Num) { //Funcao que converte um inteiro para uma string
 	ostringstream str;
 	str << Num;
 	return str.str();
