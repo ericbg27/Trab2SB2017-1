@@ -240,6 +240,7 @@ while(getline(file,linha)) {
 	tam3 = linhain.length();
 	k = 0; //Zerando contadores
 	i = 0;
+		cout << linhain << endl;
 	//************************** Verificacao da Diretiva EQU ******************************************
 		pos = linhain.find("EQU");
 		posit = pos;
@@ -273,62 +274,6 @@ while(getline(file,linha)) {
 		if(posit > -1) {
 			for(j=pos+3;j<linhain.length();j++) {
 				aux += linhain.at(j);
-			}
-			aux4 = no.busca_no(aux,eh_rotulo);
-			if(eh_rotulo == false) {
-				aux4 = aux;
-				while(getline(file,linha)) {
-					pos = linha.find("\t");
-					posit = pos;
-					if(posit > -1) {
-						while(posit > -1) {
-							aux = linha.substr(0,pos);
-							aux2 = linha.substr(pos+1,string::npos);
-							linha.clear();
-							linha += aux;
-							linha += ' ';
-							linha += aux2;
-							aux.clear();
-							aux2.clear();
-							pos = linha.find("\t");
-							posit = pos;
-						}
-					}
-					pos = linha.find("EQU");
-					posit = pos;
-					if(posit > -1) {
-						k = 0;
-						for(i=k;i<linha.length();i++) {
-							if(linha.at(i) == ':') { //Armazenando rotulo, como esperado para a diretiva EQU
-								for(j=0;j<i;j++) {
-									rotulo += linha.at(j);
-								}
-								k = i+2;
-								break;
-							}
-						}
-						for(i=k;i<linha.length();i++) { //Pegando proximo operando, que deve ser a diretiva EQU
-							if(linha.at(i) == ' ') {
-								k = i+1;
-								break;
-							}
-						}
-						for(i=k;i<linha.length();i++) { //Pega numero apos o EQU
-							valorstr += linha.at(i);
-						}
-						no.insere_final(rotulo, valorstr); //Criando no na lista de rotulos da diretiva EQU
-						break;
-					}    
-				}
-				file.clear();
-				file.seekg(0,ios::beg);
-				while(getline(file,linha)) {
-					lin_cont_aux++;
-					if(lin_cont_aux == lin_cont) {
-						break;
-					}
-				}
-				aux = no.busca_no(aux4,eh_rotulo);
 			}
 			if(atoi(aux.c_str()) != 0) {
 				flagIF1 = 1;
