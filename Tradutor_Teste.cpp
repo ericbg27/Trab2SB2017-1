@@ -240,7 +240,6 @@ while(getline(file,linha)) {
 	tam3 = linhain.length();
 	k = 0; //Zerando contadores
 	i = 0;
-		cout << linhain << endl;
 	//************************** Verificacao da Diretiva EQU ******************************************
 		pos = linhain.find("EQU");
 		posit = pos;
@@ -395,7 +394,6 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 		if(!flag_TEXT) {
 			continue;
 		} else { //Se ja chegou na SECTION TEXT
-			cout << line << endl;
 			rotulo.clear(); //Limpando Strings
 			inst.clear();
 			op1.clear();
@@ -738,6 +736,8 @@ void instrucoes(istream &entrada,ostream &saida) { //Faz a traducao das instruco
 					}
 					op2 += line.at(i1);
 				}
+				if(i1 == line.length())
+					i1--;
 				if (i1 >= line.length()-1 && flag_Vet == false) {
 					if(flag_rotulo == false) {
 						saida << "  push eax" << endl;
